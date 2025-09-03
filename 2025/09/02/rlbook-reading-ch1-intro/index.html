@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    
+    <meta charset="UTF-8">
+    <title>rlbook reading: ch1-intro - guochuan</title>
+    <link rel="shortcut icon" href="/static/img/icon.png">
+    <link rel="icon" href="/static/img/icon.png" sizes="192x192"/>
+    <link rel="stylesheet" href="/static/todo.css">
+    <link rel="stylesheet" href="/static/custom.css">
+    
+<link rel="stylesheet" href="/static/kico.css">
+<link rel="stylesheet" href="/static/hingle.css">
+
+    
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta property="og:site_name" content="guochuan">
+    <meta property="og:title" content="rlbook reading: ch1-intro"/>
+    
+    
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <header>
+    <div class="head-title">
+        <h4>guochuan</h4>
+    </div>
+    <div class="head-action">
+        <div class="toggle-btn"></div>
+        <div class="light-btn"></div>
+        <div class="search-btn"></div>
+    </div>
+    <form class="head-search" method="post">
+        <input type="text" name="s" placeholder="搜索什么？">
+    </form>
+    <nav class="head-menu">
+        <a href="/">首页</a>
+        <div class="has-child">
+            <a href>分类</a>
+            <div class="sub-menu">
+                <a class="category-link" href="/categories/computer-vision/">computer vision</a><a class="category-link" href="/categories/reinforcement-learning/">reinforcement learning</a>
+            </div>
+        </div>
+        
+            <a href="/about">关于我</a>
+        
+            <a href="/friends">朋友们</a>
+        
+    </nav>
+</header>
+
+    <main>
+    <div class="wrap min">
+        <section class="post-title">
+            <h2>rlbook reading: ch1-intro</h2>
+            <div class="post-meta">
+<time class="date">2025.09.02</time>
+
+    <time class="date updated-time" style="margin-left: 10px; color: #999;">
+        (Updated: 2025.09.02)
+    </time>
+
+            
+                <span class="category"><a class="category-link" href="/categories/reinforcement-learning/">reinforcement learning</a></span>
+            
+            </div>
+        </section>
+        <article class="post-content">
+        
+            <blockquote>
+<p>Learning from interactions is a fundamental idea underlying nearly all theories of learning and intelligence. This book will explore a <em>computational</em> approach to dive into this. We will explore some designs in solving learning problems and evaluate the design through <em>mathematical analysis</em> or <em>computational experiments</em>.</p>
+</blockquote>
+<h1 id="RL-is-a-problem-solution-and-field"><a href="#RL-is-a-problem-solution-and-field" class="headerlink" title="RL is a problem,solution and field"></a>RL is a problem,solution and field</h1><p>Reinforcement learning, like many topics whose names end with “ing,” such as machine learning and mountaineering, is simultaneously a <em>problem</em>, a class of <em>solution methods</em> that work well on the problem, and the <em>field</em> that studies this problem and its solution methods. It&#39;s essential to keep the three conceptually seperate.</p>
+<p>The detailed formalization of the $problem$ will be given in Ch-3. It&#39;s simply about to capture the most important aspests of the real problem facing a learning agent interacting over time with environment. The agent can <strong>sense</strong>, <strong>take actions</strong> and <strong>have a goal</strong> . Any method to solve this is considered as <em>rl method</em>.</p>
+<h1 id="Difference-supervised-and-unsupervised-learning"><a href="#Difference-supervised-and-unsupervised-learning" class="headerlink" title="Difference supervised and unsupervised learning"></a>Difference supervised and unsupervised learning</h1><p><em>Supervised learning</em> is learning from a training set of labeled examples provided by a  knowledgable external supervisor. The object of this kind of learning is for the<br>system to extrapolate, or generalize, its responses so that it acts correctly in situations not present in the training set. However it&#39;s not learning from interaction. In interactive problems it is often impractical to obtain examples of desired behavior that are both correct and representative of all the situations in which the agent has to act. In uncharted territory—where one would expect learning to be most beneficial—an agent must be able to learn from its own experience.</p>
+<p><em>Unsupervised learning</em> is to find the structure hidden in the collections of unlabeled data. However, reinforcement learning is trying to maximize a reward signal instead of trying to find hidden structure.</p>
+<h1 id="Exploration-and-exploitation-trade-off"><a href="#Exploration-and-exploitation-trade-off" class="headerlink" title="Exploration and exploitation trade-off"></a>Exploration and exploitation trade-off</h1><p>To $\max r_t$, the agent prefers the action $a_k \in \{a_i\}_{i=1}^{t-1},a_k=\arg \max_{i} r_t(a_i) $.But to discover such actions, it has to try actions that it has not selected before. On the one hand, the agent has to <em>exploit</em> what it already has experienced to obtain rewards, but it has to <em>explore</em> in order to make better action selections in the future.</p>
+<h1 id="RL-explicitly-considers-the-whole-problem"><a href="#RL-explicitly-considers-the-whole-problem" class="headerlink" title="RL explicitly considers the whole problem"></a>RL explicitly considers the whole problem</h1><p>Another key feature of reinforcement learning is that it explicitly considers the whole problem of a goal-directed agent interacting with an uncertain environment.All reinforcement learning agents have explicit goals, can sense aspects of their environments, and can choose actions to influence their environments.</p>
+<h1 id="Elements-of-RL"><a href="#Elements-of-RL" class="headerlink" title="Elements of RL"></a>Elements of RL</h1><p>Beyond the agent and the environment, four main elements:</p>
+<ul>
+<li><em>policy</em>: defines the learning agent&#39;s way of behaving at a given time. Can be roughly thought of as perceived states of the environment to actions to be taken.</li>
+<li><em>reward signal</em>: defines the goal of a RL problem. On each step time, the environment sends to the RL agent a signal number called <em>reward</em>. The agent&#39;s sole object is to maximize the total reward it receives over long run.</li>
+<li><p><em>value function</em>. Different from <em>reward</em> determines the immediate, intrinsic desirability of the environment state, <em>value</em> indicates <strong>long-term</strong> desirability of states after taking into account the states that are likely to follow and the rewards available in those states.</p>
+<blockquote>
+<p>The relationship between <em>reward</em> and <em>value</em>: Rewards are in a sense primary, whereas values, as predictions of rewards, are secondary.Without rewards there could be no values, and the only purpose of estimating values is to achieve more reward. Nevertheless, it is values with which we are most concerned when making and evaluating decisions. Nevertheless, it is values with which we are most concerned when making and evaluating decisions. Action choices are made based on value judgments. We seek actions that bring about states of highest value, not highest reward, because these actions obtain the greatest amount of reward for us over the long run.</p>
+</blockquote>
+</li>
+<li><p><em>model of the environment</em>: allows inferences to be made about how the environment will behave. <em>Models</em> are used for <em>planning</em> which decides courses of action by considering possible future situations before they really experienced. Using <em>models</em> and <em>planning</em> are called <em>model-based</em> methods as opposed to <em>model-free</em> that are explicitly trial-and-error learners </p>
+</li>
+</ul>
+
+        </article>
+        <section class="post-near">
+            <ul>
+                
+                    <li>上一篇: 看完啦 (つд⊂)</li>
+                
+                
+                    <li>下一篇: <a href="/2025/09/01/stereo-systems/">Stereo Systems</a></li>
+                
+            </ul>
+        </section>
+        
+            <section class="post-tags">
+            <a class="-none-link" href="/tags/read-book/" rel="tag">read book</a><a class="-none-link" href="/tags/rl/" rel="tag">rl</a>
+            </section>
+        
+    
+        <section class="post-author">
+        
+            <figure class="author-avatar">
+                <img src="https://sdn.geekzu.org/avatar/d22eb460ecab37fcd7205e6a3c55c228?s=200&r=X&d=" alt="Hingle" />
+            </figure>
+        
+            <div class="author-info">
+                <h4>Hingle</h4>
+                <p>请在这里设置你的作者信息</p>
+            </div>
+        </section>
+    
+    </div>
+</main>
+
+    <footer>
+    <div class="buttons">
+        <button class="to-top" href="#"></button>
+    </div>
+    <div class="wrap min">
+        <section class="widget">
+            <div class="row">
+                <div class="col-m-4">
+                    <h3 class="title-recent">最新文章：</h3>
+                    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2025/09/02/rlbook-reading-ch1-intro/">rlbook reading: ch1-intro</a></li><li class="post-list-item"><a class="post-list-link" href="/2025/09/01/stereo-systems/">Stereo Systems</a></li><li class="post-list-item"><a class="post-list-link" href="/2025/08/30/epipolar-geometry/">epipolar-geometry</a></li></ul>
+                </div>
+                <div class="col-m-4">
+                    <h3 class="title-date">时光机：</h3>
+                    <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/09/">九月 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/08/">八月 2025</a></li></ul>
+                </div>
+                <div class="col-m-4">
+                    <h3 class="title-tags">标签云：</h3>
+                    <a href="/tags/3D-Vision/" style="font-size: 10px;">3D Vision</a> <a href="/tags/computer-vision/" style="font-size: 20px;">computer vision</a> <a href="/tags/math/" style="font-size: 10px;">math</a> <a href="/tags/read-book/" style="font-size: 10px;">read book</a> <a href="/tags/rl/" style="font-size: 10px;">rl</a>
+                </div>
+            </div>
+        </section>
+        <section class="sub-footer">
+            <p>© 2025 <a href="/">guochuan</a>. All Rights Reserved. Theme By <a href="https://github.com/Dreamer-Paul/Hingle" target="_blank" rel="nofollow">Hingle</a>.</p>
+        </section>
+    </div>
+</footer>
+
+
+<script src="/static/kico.js"></script>
+<script src="/static/hingle.js"></script>
+<script src="/static/todo.js"></script>
+
+
+
+<script>var hingle = new Paul_Hingle({"copyright":true,"night":true});</script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

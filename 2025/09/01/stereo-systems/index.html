@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    
+    <meta charset="UTF-8">
+    <title>Stereo Systems - guochuan</title>
+    <link rel="shortcut icon" href="/static/img/icon.png">
+    <link rel="icon" href="/static/img/icon.png" sizes="192x192"/>
+    <link rel="stylesheet" href="/static/todo.css">
+    <link rel="stylesheet" href="/static/custom.css">
+    
+<link rel="stylesheet" href="/static/kico.css">
+<link rel="stylesheet" href="/static/hingle.css">
+
+    
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta property="og:site_name" content="guochuan">
+    <meta property="og:title" content="Stereo Systems"/>
+    
+    
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\\[','\\]']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+  }
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <header>
+    <div class="head-title">
+        <h4>guochuan</h4>
+    </div>
+    <div class="head-action">
+        <div class="toggle-btn"></div>
+        <div class="light-btn"></div>
+        <div class="search-btn"></div>
+    </div>
+    <form class="head-search" method="post">
+        <input type="text" name="s" placeholder="搜索什么？">
+    </form>
+    <nav class="head-menu">
+        <a href="/">首页</a>
+        <div class="has-child">
+            <a href>分类</a>
+            <div class="sub-menu">
+                <a class="category-link" href="/categories/computer-vision/">computer vision</a><a class="category-link" href="/categories/reinforcement-learning/">reinforcement learning</a>
+            </div>
+        </div>
+        
+            <a href="/about">关于我</a>
+        
+            <a href="/friends">朋友们</a>
+        
+    </nav>
+</header>
+
+    <main>
+    <div class="wrap min">
+        <section class="post-title">
+            <h2>Stereo Systems</h2>
+            <div class="post-meta">
+<time class="date">2025.09.01</time>
+
+    <time class="date updated-time" style="margin-left: 10px; color: #999;">
+        (Updated: 2025.09.02)
+    </time>
+
+            
+                <span class="category"><a class="category-link" href="/categories/computer-vision/">computer vision</a></span>
+            
+            </div>
+        </section>
+        <article class="post-content">
+        
+            <p>In previous notes, we have talked about how adding additional viewpoints of a scene can greatly enhance our knowledge of the said scene. We focused on<br>the epipolar geometry setup in order to relate points of one image plane to points in the other without extracting any information about the 3D scene. In these lecture notes, we will discuss how to recover information about the 3D scene from multiple 2D images. </p>
+<p>I will talk about 4 parts:</p>
+<ul>
+<li><strong>Triangulation</strong>: the process of determining the location of a 3D point given its projections into two or more images.</li>
+<li><strong>Affine structure from motion</strong></li>
+<li><strong>Perspective structure from motion</strong></li>
+</ul>
+<h1 id="Triangulation"><a href="#Triangulation" class="headerlink" title="Triangulation"></a>Triangulation</h1><p>We have two cameras with known camera intrinsic parameters $K$ and $K&#39;$ respectively. We also know the relative orientations and offsets $R,T$ of the cameras with respect to each other. We can also get precise locations of $p$ and $p&#39;$ in the image.</p>
+<p>A $\textbf{Naive}$ way to find the point $P$ in 3D is to find the intersection of sight lines $l$ and $l&#39;$ which are defined by the camera centers $O_1,O_2$ and image locations $p,p&#39;$. </p>
+<p>An image explains this:<br><img src="/2025/09/01/stereo-systems/image-3.png" class="" title="alt text"></p>
+<p>Although this process is both strightforward and mathematically sound, it doesn&#39;t work well because of the noisy observations $p$ and $p&#39;$ and noise camera calibration parameter. Next I will show <strong>linear</strong> and <strong>unlinear</strong> method to solve this.</p>
+<h2 id="A-linear-method-for-triangulation"><a href="#A-linear-method-for-triangulation" class="headerlink" title="A linear method for triangulation"></a>A linear method for triangulation</h2><p>Let $p=MP=(x,y,1)$ and $p&#39;=M&#39;P(x&#39;,y&#39;,1)$. Notice that $p\times (MP)=0$. Thus we immediately derive three constraints:</p>
+<script type="math/tex; mode=display">
+x(M_3P)-(M_1P)=0 \\\\
+y(M_3P)-(M_2)P=0 \\\\
+x(M_2P)-y(M_1P)=0</script><p>where $M_i$ is the $i$-th row of the matrix $M$. Using the constraints from both images, we can formulate a linear equation of the form $AP=0$ where</p>
+<script type="math/tex; mode=display">
+A=\begin{bmatrix}
+    xM_3-M_1\\
+    yM_3-M_2\\
+    x'M_3'-M_1'\\
+    y'M_3'-M_2'
+\end{bmatrix}</script><p>The equation can be solved using our best friend $\textbf{SVD}$ to find a best linear estimation of $P$. This method can easily handles multi views by just appending additional rows to $A$.</p>
+<p>However, this method is not suitable for projective reconstruction. Since if we apply a projective transformation $H$ to the scene, $M,M&#39;$ become $MH^{-1},M&#39;H^{-1}$. Therefore, we will solve $(AH^{-1})(HP)=0$. Since $\textbf{SVD}$ solves for the constraint that $||P||=1$ which is not invariant under a projective transformation $H$. So this method often can&#39;t find the optimal solution to triangulation problem.</p>
+<h2 id="Code-implementation"><a href="#Code-implementation" class="headerlink" title="Code implementation"></a>Code implementation</h2><pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token triple-quoted-string string">'''
+LINEAR_ESTIMATE_3D_POINT given a corresponding points in different images,
+compute the 3D point is the best linear estimate
+Arguments:
+    image_points - the measured points in each of the M images (Mx2 matrix)
+    camera_matrices - the camera projective matrices (Mx3x4 tensor)
+Returns:
+    point_3d - the 3D point
+'''</span>
+<span class="token keyword">def</span> <span class="token function">linear_estimate_3d_point</span><span class="token punctuation">(</span>image_points<span class="token punctuation">,</span> camera_matrices<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    M1 <span class="token operator">=</span> camera_matrices<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">]</span>
+    M2 <span class="token operator">=</span> camera_matrices<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">]</span>
+    M3 <span class="token operator">=</span> camera_matrices<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">]</span>
+    A <span class="token operator">=</span> np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token operator">*</span>image_points<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    A<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">]</span> <span class="token operator">=</span> image_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">:</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">*</span>M3 <span class="token operator">-</span> M1
+    A<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">]</span> <span class="token operator">=</span> image_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token operator">*</span>M3 <span class="token operator">-</span> M2
+    _<span class="token punctuation">,</span>_<span class="token punctuation">,</span>Vt <span class="token operator">=</span> np<span class="token punctuation">.</span>linalg<span class="token punctuation">.</span>svd<span class="token punctuation">(</span>A<span class="token punctuation">)</span>
+    point_3d <span class="token operator">=</span> Vt<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">:</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token operator">/</span>Vt<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">]</span>
+    <span class="token keyword">return</span> point_3d<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="A-nonlinear-method-for-triangualtion"><a href="#A-nonlinear-method-for-triangualtion" class="headerlink" title="A nonlinear method for triangualtion"></a>A nonlinear method for triangualtion</h2><p>The nonlinear method is to find the best least-squares estimate of the $\textbf{reprojection error}$ of $\hat{P}$:</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    \min_{\hat{P}} ||M\hat{P}-p||^2+||M'\hat{P}-p'||^2
+\end{aligned}</script><p>If there are more than two images:</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    \min_{\hat{P}} \sum_{i}||M_i\hat{P}-p_i||^2
+\end{aligned}</script><p>If we set $e_i$ to be a $2\times1$ vector $e_i=M_i\hat{P}-p_i$.  The method we use here is Gauss-Newton whose key insight is to linearize the residual function $e$ near the current estimate $\hat{P}$:</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    e(\hat{P}+\delta_P)\approx e(\hat{P})+\frac{\partial e}{\partial P} \delta_P
+\end{aligned}</script><p>Subsequently, the minimization problem transforms into</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    \min_{\delta_P} ||\frac{\partial e}{\partial P}\delta_P-(-e(\hat{P}))||^2
+\end{aligned}</script><p>For the triangulation problem with $N$ images, the solution is:</p>
+<script type="math/tex; mode=display">
+\delta_P=-(J^TJ)^{-1}J^Te</script><p>where </p>
+<script type="math/tex; mode=display">
+e=\begin{bmatrix}
+    e_1 \\\\ \vdots \\\\ e_N
+\end{bmatrix}=\begin{bmatrix}
+    p_1-M_1\hat{P} \\\\
+    \vdots \\\\
+    p_N-M_N\hat{P}
+\end{bmatrix}</script><p>and</p>
+<script type="math/tex; mode=display">
+J=\begin{bmatrix}
+    \frac{\partial e_1}{\partial \hat{P}_1} & \frac{\partial e_1}{\partial \hat{P}_2} &\frac{\partial e_1}{\partial \hat{P}_3}\\\\
+    \vdots & \vdots & \vdots \\\\
+    \frac{\partial e_N}{\partial \hat{P}_1} & \frac{\partial e_N}{\partial \hat{P}_2} &\frac{\partial e_N}{\partial \hat{P}_3}
+\end{bmatrix}</script><p>Iteratively use the $\delta_P$ to update $\hat{P}$ until convergence. However the Gauss-Newton method algorithm gives no guarantee of convergence. So, it is always useful in practice to put an upper bound on the number of updates made to the estimate.</p>
+<h2 id="Code-implementation-1"><a href="#Code-implementation-1" class="headerlink" title="Code implementation"></a>Code implementation</h2><ul>
+<li>implement <em>reprojrction error</em>：<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token triple-quoted-string string">'''
+REPROJECTION_ERROR given a 3D point and its corresponding points in the image
+planes, compute the reprojection error vector and associated Jacobian
+Arguments:
+    point_3d - the 3D point corresponding to points in the image
+    image_points - the measured points in each of the M images (Mx2 matrix)
+    camera_matrices - the camera projective matrices (Mx3x4 tensor)
+Returns:
+    error - the 2Mx1 reprojection error vector
+'''</span>
+<span class="token keyword">def</span> <span class="token function">reprojection_error</span><span class="token punctuation">(</span>point_3d<span class="token punctuation">,</span> image_points<span class="token punctuation">,</span> camera_matrices<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    error <span class="token operator">=</span> np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token operator">*</span>image_points<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token comment"># pdb.set_trace()</span>
+    <span class="token keyword">if</span> point_3d<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">==</span> <span class="token number">3</span><span class="token punctuation">:</span>
+        point_3d <span class="token operator">=</span> np<span class="token punctuation">.</span>hstack<span class="token punctuation">(</span><span class="token punctuation">(</span>point_3d<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    reprojected_points <span class="token operator">=</span> camera_matrices@point_3d
+    reprojected_points <span class="token operator">=</span> reprojected_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token operator">/</span>reprojected_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">:</span><span class="token number">3</span><span class="token punctuation">]</span>
+    error<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">=</span> reprojected_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">-</span> image_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span>
+    error<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">=</span> reprojected_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">-</span> image_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span>
+    <span class="token keyword">return</span> error<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre></li>
+<li>implement <em>jacobian</em><pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token triple-quoted-string string">'''
+JACOBIAN given a 3D point and its corresponding points in the image
+planes, compute the reprojection error vector and associated Jacobian
+Arguments:
+    point_3d - the 3D point corresponding to points in the image
+    camera_matrices - the camera projective matrices (Mx3x4 tensor)
+Returns:
+    jacobian - the 2Mx3 Jacobian matrix
+'''</span>
+<span class="token keyword">def</span> <span class="token function">jacobian</span><span class="token punctuation">(</span>point_3d<span class="token punctuation">,</span> camera_matrices<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">if</span> point_3d<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">==</span> <span class="token number">3</span><span class="token punctuation">:</span>
+        point_3d <span class="token operator">=</span> np<span class="token punctuation">.</span>hstack<span class="token punctuation">(</span><span class="token punctuation">(</span>point_3d<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    projected_points <span class="token operator">=</span> camera_matrices@point_3d
+    jacobian_matrix <span class="token operator">=</span> np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token operator">*</span>camera_matrices<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    jacobian_matrix<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> camera_matrices<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">/</span>projected_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">-</span> camera_matrices<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">*</span>projected_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">/</span><span class="token punctuation">(</span>projected_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token operator">**</span><span class="token number">2</span><span class="token punctuation">)</span>
+    jacobian_matrix<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> camera_matrices<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">/</span>projected_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">-</span> camera_matrices<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">*</span>projected_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">/</span><span class="token punctuation">(</span>projected_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token operator">**</span><span class="token number">2</span><span class="token punctuation">)</span>
+    jacobian_matrix<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">=</span>  camera_matrices<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">/</span>projected_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">-</span> camera_matrices<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">*</span>projected_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">/</span><span class="token punctuation">(</span>projected_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token operator">**</span><span class="token number">2</span><span class="token punctuation">)</span>
+    jacobian_matrix<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">=</span> camera_matrices<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">/</span>projected_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">-</span> camera_matrices<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">*</span>projected_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">/</span><span class="token punctuation">(</span>projected_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token operator">**</span><span class="token number">2</span><span class="token punctuation">)</span>
+    jacobian_matrix<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">=</span> camera_matrices<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token operator">/</span>projected_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">-</span> camera_matrices<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token operator">*</span>projected_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">/</span><span class="token punctuation">(</span>projected_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token operator">**</span><span class="token number">2</span><span class="token punctuation">)</span>
+    jacobian_matrix<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">=</span> camera_matrices<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token operator">/</span>projected_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">-</span> camera_matrices<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token operator">*</span>projected_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">/</span><span class="token punctuation">(</span>projected_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token operator">**</span><span class="token number">2</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> jacobian_matrix<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre></li>
+<li><em>nonliear method</em><pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token triple-quoted-string string">'''
+NONLINEAR_ESTIMATE_3D_POINT given a corresponding points in different images,
+compute the 3D point that iteratively updates the points
+Arguments:
+    image_points - the measured points in each of the M images (Mx2 matrix)
+    camera_matrices - the camera projective matrices (Mx3x4 tensor)
+Returns:
+    point_3d - the 3D point
+'''</span>
+<span class="token keyword">def</span> <span class="token function">nonlinear_estimate_3d_point</span><span class="token punctuation">(</span>image_points<span class="token punctuation">,</span> camera_matrices<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    points_3d <span class="token operator">=</span> linear_estimate_3d_point<span class="token punctuation">(</span>image_points<span class="token punctuation">,</span> camera_matrices<span class="token punctuation">)</span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> <span class="token builtin">range</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        e <span class="token operator">=</span> reprojection_error<span class="token punctuation">(</span>points_3d<span class="token punctuation">,</span> image_points<span class="token punctuation">,</span> camera_matrices<span class="token punctuation">)</span>
+        J <span class="token operator">=</span> jacobian<span class="token punctuation">(</span>points_3d<span class="token punctuation">,</span> camera_matrices<span class="token punctuation">)</span>
+        sigma <span class="token operator">=</span> np<span class="token punctuation">.</span>linalg<span class="token punctuation">.</span>pinv<span class="token punctuation">(</span>J<span class="token punctuation">.</span>T@J<span class="token punctuation">)</span>@J<span class="token punctuation">.</span>T@e
+        points_3d <span class="token operator">=</span> points_3d <span class="token operator">-</span> sigma
+    <span class="token keyword">return</span> points_3d<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h1 id="Affine-structure-from-motion"><a href="#Affine-structure-from-motion" class="headerlink" title="Affine structure from motion"></a>Affine structure from motion</h1></li>
+</ul>
+<p>In previous section, we see how we can go beyond two views of a scene to gain information about the 3D scene. This section we will see how can we simultaneously determine both the 3D structure of the scene and the parameter of the camera in what is known as <strong>structure from motion(sfm)</strong>.</p>
+<p>Let&#39;s formally introduce this problem: suppose we have $m$ cameras with camera transformations $M_{i}$ encoding both extrinsic and intrinsic parameter. We have $n$ 3D points denoted as $X_j$. The location of $X_j$  projected to the image of camera $i$ using projective transformation $M_i$  is represented as $x_{ij}$. The aim of sfm is to recover both the structure of the scene (the $n$ 3D points $X_j$) and the motion of the cameras (the $m$ projection matrices $M_i$) from all observation $x_{ij}$.</p>
+<p>Now we will start with a simpler problem: assume the cameras are <strong>affine</strong> or weak-perspective. Without the perspective scaling operation, it&#39;s mathematically easy for deriving this problem. </p>
+<p>Let&#39;s first look at the property of affine transformation:</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    & M=\begin{bmatrix}
+        A&b\\\\0&1
+    \end{bmatrix} \in \mathbb{R}^{3\times 4} \\\\
+  &  x=MX=\begin{bmatrix}
+    &m_1 \\\\ &m_2 \\\\ 0&0&0&1
+  \end{bmatrix}\begin{bmatrix}
+    X_1 \\\\ X_2\\\\X_3\\\\X_4
+  \end{bmatrix}=\begin{bmatrix}
+    m_1X \\\\ m_2X \\\\1
+  \end{bmatrix}
+\end{aligned}</script><p>Thus we can compactly reprensent any camera matrix in the format $M_{\text{affine}}=[A \quad b]$. So we can use the affine camerae model to express the relationship from a point $X_j$ in 3D and the corresponding observations in each affine camera. Returning to our problem, we need to estimate $m$ matrices $M_i$ and $n$ coordinates $X_j$, for a total of $8m+3n$ unknowns. Each observation creates $2$ constraints, so there are $2mn$ equations in $8m+3n$ unknowns. Once we have enough corresponding points in each image, we can use $\textbf{factorizaion}$ method to solve which will be covered in next section.</p>
+<h2 id="The-Tomasi-and-Kanade-factorization-method"><a href="#The-Tomasi-and-Kanade-factorization-method" class="headerlink" title="The Tomasi and Kanade factorization method"></a>The Tomasi and Kanade factorization method</h2><p>This method consists of two major steps: <strong>the data centering step</strong> and <strong>the actual factorizaion step</strong>.</p>
+<p>Let&#39;s first begin with the data centering step:</p>
+<script type="math/tex; mode=display">
+\hat{x}_{ij}=x_{ij}-\overline{x}_i=x_{ij}-\frac{1}{n}\sum_{k=1}^nx_{ik}</script><p>Recall that:</p>
+<script type="math/tex; mode=display">
+x_{ij}=A_iX_j+b_i</script><p>So $\hat{x}_{ij}$:</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    \hat{x}_{ij}&=x_{ij}-\frac{1}{n}\sum_{k=1}^nx_{ik}\\\\
+&=A_iX_j+b_i-\frac{1}{n}\sum_{k=1}^n(A_iX_k+b_i)\\\\
+&=A_i(X_j-\frac{1}{n}\sum_{k=1}^nX_k)\\\\
+&=A_i(X_j-\overline{X})\\\\
+&=A_i\hat{X}_j
+\end{aligned}</script><p>Notice that the centered $x_{ij}$ and $\hat{X}_j$ are only related by $A_i$. So we can formulate it in matrix form:</p>
+<script type="math/tex; mode=display">
+D=\begin{bmatrix}
+    \hat{x}_{11} &\hat{x}_{12}& \dots &\hat{x}_{1n} \\\\
+    \hat{x}_{21} & \hat{x}_{22} & \dots & \hat{x}_{2n}\\\\ &&\ddots\\\\
+    \hat{x}_{m1} & \hat{x}_{m2}&\dots & \hat{x}_{mn}
+\end{bmatrix}=MS</script><p>where $D \in \mathbb{R}^{2m\times n}   $,  $M \in \mathbb{R}^{2m\times 3}$(comprises the camera matrices $A_1,\dots A_m$) and $S\in \mathbb{R}^{3 \times 2n}$(comprises the 3D points $\hat{X}_1,\dots \hat{X}_n$).</p>
+<p>Observe that $\text{rank}(D)=3$. Thus we can use $\textbf{SVD}$  to get a best-3 estimation of $D$:</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    D&=U\Sigma V^T\\
+    &\approx \begin{bmatrix}
+        u_1 & u_2 &u_3
+    \end{bmatrix}\begin{bmatrix}
+        \sigma_1 &0&0\\
+        0&\sigma_2&0\\
+        0&0&\sigma_3
+    \end{bmatrix}\begin{bmatrix}
+        v_1^T\\v_2^T\\v_3^T
+    \end{bmatrix}
+    \\&= U_3\Sigma_3V_3^T
+\end{aligned}</script><p>Notice that $U_3$ is a $2m\times 3$ matrix, which is the same size as motion matrix $M$, so as $\Sigma_3 V_3^T$ to structure matrix $S$. In their paper, they concluded that a robust choice of the factorization is $M=U_3 \sqrt{\Sigma_3}$ and $S=\sqrt{\Sigma_3}V_3^T$</p>
+<blockquote>
+<p>However affine ambiguity exists: $D=(MA)(A^{-1}S)$. So $M$ and $S$ are determined up to a multiplication by a common matrix. When a reconstruction has affine ambiguity, it means that parallelism is preserved, but the metric scale<br>is unknown.</p>
+</blockquote>
+<h2 id="Code-implementation-2"><a href="#Code-implementation-2" class="headerlink" title="Code implementation"></a>Code implementation</h2><pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token triple-quoted-string string">'''
+FACTORIZATION_METHOD The Tomasi and Kanade Factorization Method to determine
+the 3D structure of the scene and the motion of the cameras.
+Arguments:
+    points_im1 - N points in the first image that match with points_im2
+    points_im2 - N points in the second image that match with points_im1
+
+    Both points_im1 and points_im2 are from the get_data_from_txt_file() method
+Returns:
+    structure - the structure matrix
+    motion - the motion matrix
+'''</span>
+<span class="token keyword">def</span> <span class="token function">factorization_method</span><span class="token punctuation">(</span>points_im1<span class="token punctuation">,</span> points_im2<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    
+    centered_points_im1 <span class="token operator">=</span> points_im1<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">-</span> np<span class="token punctuation">.</span>mean<span class="token punctuation">(</span>points_im1<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span>
+    centered_points_im2 <span class="token operator">=</span> points_im2<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">-</span> np<span class="token punctuation">.</span>mean<span class="token punctuation">(</span>points_im2<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span>
+    D <span class="token operator">=</span> np<span class="token punctuation">.</span>concatenate<span class="token punctuation">(</span><span class="token punctuation">(</span>centered_points_im1<span class="token punctuation">,</span>centered_points_im2<span class="token punctuation">)</span><span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">.</span>T
+    U<span class="token punctuation">,</span> S<span class="token punctuation">,</span> Vt <span class="token operator">=</span> np<span class="token punctuation">.</span>linalg<span class="token punctuation">.</span>svd<span class="token punctuation">(</span>D<span class="token punctuation">)</span>
+    U3 <span class="token operator">=</span> U<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token number">3</span><span class="token punctuation">]</span>
+    S3 <span class="token operator">=</span> np<span class="token punctuation">.</span>diag<span class="token punctuation">(</span>S<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    V3 <span class="token operator">=</span> Vt<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">]</span>
+    motion <span class="token operator">=</span> U3 @ np<span class="token punctuation">.</span>sqrt<span class="token punctuation">(</span>S3<span class="token punctuation">)</span>
+    structure <span class="token operator">=</span> np<span class="token punctuation">.</span>sqrt<span class="token punctuation">(</span>S3<span class="token punctuation">)</span> @ V3
+    center_im1 <span class="token operator">=</span> np<span class="token punctuation">.</span>mean<span class="token punctuation">(</span>points_im1<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span>
+    center_im2 <span class="token operator">=</span> np<span class="token punctuation">.</span>mean<span class="token punctuation">(</span>points_im2<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span>
+    b <span class="token operator">=</span> np<span class="token punctuation">.</span>concatenate<span class="token punctuation">(</span><span class="token punctuation">(</span>center_im1<span class="token punctuation">,</span> center_im2<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    centered_3d <span class="token operator">=</span> np<span class="token punctuation">.</span>linalg<span class="token punctuation">.</span>lstsq<span class="token punctuation">(</span>motion<span class="token punctuation">,</span> b<span class="token punctuation">,</span> rcond<span class="token operator">=</span><span class="token boolean">None</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+    structure <span class="token operator">=</span> structure <span class="token operator">+</span> centered_3d<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> structure<span class="token punctuation">,</span> motion<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h1 id="Perspective-structure-from-motion"><a href="#Perspective-structure-from-motion" class="headerlink" title="Perspective structure from motion"></a>Perspective structure from motion</h1><p>After studying the simplified affine structure from motion, let&#39;s consider the general case for projective cameras $M_i$ which contains 11 degrees of freedom. Similar to the affine case where the solution can be found up to an affine transformation, solutions for structure and motion can be determined up a projective transformation in the general case: we can always arbitrarily apply a 4×4 projective transformation $H$ to the motion matrix, as long as we also transform the structure matrix by the inverse transformation $H^{-1}$. The resulting observations in the image plane will still be the same.</p>
+<p>As in the affine case, let&#39;s first formulate the problem: we want to estimate $m$ motion matrices $M_i$ and $n$ 3D points $X_j$ from $mn$ observations $x_{ij}$. Because cameras and points can only be recovered up to a $4\times 4$ projective transformations up to scale (15 parameters), we have $11m+3n-15$ unknowns in $2mn$ equations.</p>
+<h2 id="The-algebraic-approach"><a href="#The-algebraic-approach" class="headerlink" title="The algebraic approach"></a>The algebraic approach</h2><p>Since $M_1,M_2$ are up to a projection transformation $H$. So we can consider a $H$ such that the first camera projrction matrix $M_1H^{-1}$  is canonical (i.e. $\tilde{M}_1=M_1H^{-1}=[I\quad 0]$). Thus: </p>
+<script type="math/tex; mode=display">
+p=M_1 P=M_1 H^{-1}HP=[I\mid 0] \tilde{P}\\
+p'=M_2P=M_2H^{-1}HP=[A\mid b]\tilde{P}=A[I|0]\tilde{P}+b=Ap+b</script><p><strong>Key observation</strong>:</p>
+<script type="math/tex; mode=display">
+p'\times b=(Ap+b)\times b=Ap\times b
+\\
+0=p'^T(p'\times b)=p'^T\cdot (b\times Ap)=p'^T[b]_{\times}Ap</script><p>which must remind you the general definition of the Fundamental matrix $p&#39;^TFp=0$. If we set $F=[b]_{\times}A$, then extracting A and b simply breaks down to a decomposition problem.</p>
+<p><strong>Observation again</strong>, we use  the property of cross product:</p>
+<script type="math/tex; mode=display">
+F^Tb=[[b]_{\times}A]^Tb=A^T[b]_{\times}^Tb=-A^T\cdot(b\times b)=0</script><p>Since $F$ is singular, we can use $\textbf{SVD}$ to get $b$ with $||b||_2=1$.</p>
+<p><strong>Observation again</strong>: if we set $A=-[b]_{\times}F$, we can verify that this definition satisfies $F=[b]_{\times}A$:</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    [b]_{\times}A=-[b]_{\times}[b]_{\times}F=-(bb^T-|b|^2I)F=F
+\end{aligned}</script><p>Thus we get two expressions for camera matrices $M_1H^{-1}$ and $M_2H^{-1}$:</p>
+<script type="math/tex; mode=display">
+\tilde{M}_1=[I\quad 0] \qquad \tilde{M}_2=[-[b]_{\times}F \quad b]</script><p>Notice that $F^Tb=0$ and $F^Te&#39;=0$. So we can replace $b$ with epipolar $e&#39;$:</p>
+<script type="math/tex; mode=display">
+\tilde{M}_1=[I\quad 0] \qquad \tilde{M}_2=[-[e']_{\times}F \quad e']</script><h2 id="Determining-motion-from-the-Essential-matrix"><a href="#Determining-motion-from-the-Essential-matrix" class="headerlink" title="Determining motion from the Essential matrix"></a>Determining motion from the Essential matrix</h2><p><strong>TBD</strong>(Since this section contains complicated math which I&#39;m not familiar with.) </p>
+<h2 id="code-implementation"><a href="#code-implementation" class="headerlink" title="code implementation"></a>code implementation</h2><ul>
+<li>Get four initial extrinsic matrices. <pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token triple-quoted-string string">'''
+ESTIMATE_INITIAL_RT from the Essential Matrix, we can compute 4 initial
+guesses of the relative RT between the two cameras
+Arguments:
+    E - the Essential Matrix between the two cameras
+Returns:
+    RT: A 4x3x4 tensor in which the 3x4 matrix RT[i,:,:] is one of the
+        four possible transformations
+'''</span>
+<span class="token keyword">def</span> <span class="token function">estimate_initial_RT</span><span class="token punctuation">(</span>E<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    U<span class="token punctuation">,</span>D<span class="token punctuation">,</span>Vt <span class="token operator">=</span> np<span class="token punctuation">.</span>linalg<span class="token punctuation">.</span>svd<span class="token punctuation">(</span>E<span class="token punctuation">)</span>
+    W <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    Q1 <span class="token operator">=</span> U<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>W<span class="token punctuation">)</span><span class="token punctuation">.</span>dot<span class="token punctuation">(</span>Vt<span class="token punctuation">)</span>
+    Q2 <span class="token operator">=</span> U<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>W<span class="token punctuation">.</span>T<span class="token punctuation">)</span><span class="token punctuation">.</span>dot<span class="token punctuation">(</span>Vt<span class="token punctuation">)</span>
+    R1 <span class="token operator">=</span> np<span class="token punctuation">.</span>linalg<span class="token punctuation">.</span>det<span class="token punctuation">(</span>Q1<span class="token punctuation">)</span><span class="token operator">*</span>Q1
+    R2 <span class="token operator">=</span> np<span class="token punctuation">.</span>linalg<span class="token punctuation">.</span>det<span class="token punctuation">(</span>Q2<span class="token punctuation">)</span><span class="token operator">*</span>Q2
+
+    t1 <span class="token operator">=</span> U<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span>
+    t2 <span class="token operator">=</span> <span class="token operator">-</span>U<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span>
+    RT <span class="token operator">=</span> np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    RT<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token number">3</span><span class="token punctuation">]</span> <span class="token operator">=</span> R1
+    RT<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">]</span> <span class="token operator">=</span> t1
+    RT<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token number">3</span><span class="token punctuation">]</span> <span class="token operator">=</span> R1
+    RT<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">]</span> <span class="token operator">=</span> t2
+    RT<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token number">3</span><span class="token punctuation">]</span> <span class="token operator">=</span> R2
+    RT<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">]</span> <span class="token operator">=</span> t1
+    RT<span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token number">3</span><span class="token punctuation">]</span> <span class="token operator">=</span> R2
+    RT<span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">]</span> <span class="token operator">=</span> t2
+    <span class="token keyword">return</span> RT<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre></li>
+<li>Filter out the matrix</li>
+</ul>
+<pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token triple-quoted-string string">'''
+ESTIMATE_RT_FROM_E from the Essential Matrix, we can compute  the relative RT 
+between the two cameras
+Arguments:
+    E - the Essential Matrix between the two cameras
+    image_points - N measured points in each of the M images (NxMx2 matrix)
+    K - the intrinsic camera matrix
+Returns:
+    RT: The 3x4 matrix which gives the rotation and translation between the 
+        two cameras
+'''</span>
+<span class="token keyword">def</span> <span class="token function">estimate_RT_from_E</span><span class="token punctuation">(</span>E<span class="token punctuation">,</span> image_points<span class="token punctuation">,</span> K<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    RT_initall <span class="token operator">=</span> estimate_initial_RT<span class="token punctuation">(</span>E<span class="token punctuation">)</span>
+    M1 <span class="token operator">=</span> K<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>np<span class="token punctuation">.</span>hstack<span class="token punctuation">(</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>eye<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">,</span> np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    count <span class="token operator">=</span> <span class="token number">0</span>
+    idx <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> <span class="token builtin">range</span><span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        M2 <span class="token operator">=</span> K<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>RT_initall<span class="token punctuation">[</span>i<span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        used_image_points <span class="token operator">=</span> image_points<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">]</span>
+        camera_matrices <span class="token operator">=</span> np<span class="token punctuation">.</span>concatenate<span class="token punctuation">(</span><span class="token punctuation">(</span>M1<span class="token punctuation">[</span>np<span class="token punctuation">.</span>newaxis<span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">,</span> M2<span class="token punctuation">[</span>np<span class="token punctuation">.</span>newaxis<span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span>
+        total <span class="token operator">=</span> <span class="token number">0</span>
+        <span class="token keyword">for</span> j <span class="token keyword">in</span> <span class="token builtin">range</span><span class="token punctuation">(</span>used_image_points<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            point_3d <span class="token operator">=</span> nonlinear_estimate_3d_point<span class="token punctuation">(</span>used_image_points<span class="token punctuation">[</span>j<span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">,</span> camera_matrices<span class="token punctuation">)</span>
+            <span class="token keyword">if</span> point_3d<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">></span> <span class="token number">0</span> <span class="token keyword">and</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>point_3d<span class="token operator">-</span>RT_initall<span class="token punctuation">[</span>i<span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span>dot<span class="token punctuation">(</span>RT_initall<span class="token punctuation">[</span>i<span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">:</span>
+                total<span class="token operator">+=</span><span class="token number">1</span>
+        <span class="token keyword">if</span> total <span class="token operator">></span> count<span class="token punctuation">:</span>
+            count <span class="token operator">=</span> total
+            idx <span class="token operator">=</span> i
+    <span class="token keyword">if</span> idx <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"No valid RT found"</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token boolean">None</span>
+    <span class="token keyword">return</span> RT_initall<span class="token punctuation">[</span>idx<span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">]</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h1 id="Conclude"><a href="#Conclude" class="headerlink" title="Conclude"></a>Conclude</h1><p>Let&#39;s conclude the whole pipline of <em>sfm</em>. Suppose we have calibrated camera with known $f_x=f_y$ and $c_x=c_y=0$ (i.e. known intrinsic parameter $K$) and we precisely know the locations of each point $p$ on each image:</p>
+<ul>
+<li>Use <em>Normalized Eight-Point Algorithm</em> to compute Fundamental matrix $F$.</li>
+<li>Use the relation between $F$ and $E$: $E=K^T\cdot F\cdot K$ to compute  <em>Essential matrix</em> $E$ </li>
+<li>We can Determine motion from the Essential matrix $E$. We get 4 $[R\quad T]$ matrices.</li>
+<li>Use the nonliear method to estimate the 3D point under each $[R \quad T]$ matrix to filter out the correct matrix.</li>
+</ul>
+<p>Finally, let me show the final result of corresponding assignment from <em>CS231A</em>:</p>
+<img src="/2025/09/01/stereo-systems/image-4.png" class="" title="alt text">
+
+        </article>
+        <section class="post-near">
+            <ul>
+                
+                    <li>上一篇: <a href="/2025/09/02/rlbook-reading-ch1-intro/">rlbook reading: ch1-intro</a></li>
+                
+                
+                    <li>下一篇: <a href="/2025/08/30/epipolar-geometry/">epipolar-geometry</a></li>
+                
+            </ul>
+        </section>
+        
+            <section class="post-tags">
+            <a class="-none-link" href="/tags/3D-Vision/" rel="tag">3D Vision</a><a class="-none-link" href="/tags/computer-vision/" rel="tag">computer vision</a>
+            </section>
+        
+    
+        <section class="post-author">
+        
+            <figure class="author-avatar">
+                <img src="https://sdn.geekzu.org/avatar/d22eb460ecab37fcd7205e6a3c55c228?s=200&r=X&d=" alt="Hingle" />
+            </figure>
+        
+            <div class="author-info">
+                <h4>Hingle</h4>
+                <p>请在这里设置你的作者信息</p>
+            </div>
+        </section>
+    
+    </div>
+</main>
+
+    <footer>
+    <div class="buttons">
+        <button class="to-top" href="#"></button>
+    </div>
+    <div class="wrap min">
+        <section class="widget">
+            <div class="row">
+                <div class="col-m-4">
+                    <h3 class="title-recent">最新文章：</h3>
+                    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2025/09/02/rlbook-reading-ch1-intro/">rlbook reading: ch1-intro</a></li><li class="post-list-item"><a class="post-list-link" href="/2025/09/01/stereo-systems/">Stereo Systems</a></li><li class="post-list-item"><a class="post-list-link" href="/2025/08/30/epipolar-geometry/">epipolar-geometry</a></li></ul>
+                </div>
+                <div class="col-m-4">
+                    <h3 class="title-date">时光机：</h3>
+                    <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/09/">九月 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/08/">八月 2025</a></li></ul>
+                </div>
+                <div class="col-m-4">
+                    <h3 class="title-tags">标签云：</h3>
+                    <a href="/tags/3D-Vision/" style="font-size: 10px;">3D Vision</a> <a href="/tags/computer-vision/" style="font-size: 20px;">computer vision</a> <a href="/tags/math/" style="font-size: 10px;">math</a> <a href="/tags/read-book/" style="font-size: 10px;">read book</a> <a href="/tags/rl/" style="font-size: 10px;">rl</a>
+                </div>
+            </div>
+        </section>
+        <section class="sub-footer">
+            <p>© 2025 <a href="/">guochuan</a>. All Rights Reserved. Theme By <a href="https://github.com/Dreamer-Paul/Hingle" target="_blank" rel="nofollow">Hingle</a>.</p>
+        </section>
+    </div>
+</footer>
+
+
+<script src="/static/kico.js"></script>
+<script src="/static/hingle.js"></script>
+<script src="/static/todo.js"></script>
+
+
+
+<script>var hingle = new Paul_Hingle({"copyright":true,"night":true});</script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

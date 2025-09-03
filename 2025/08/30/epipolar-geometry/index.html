@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    
+    <meta charset="UTF-8">
+    <title>epipolar-geometry - guochuan</title>
+    <link rel="shortcut icon" href="/static/img/icon.png">
+    <link rel="icon" href="/static/img/icon.png" sizes="192x192"/>
+    <link rel="stylesheet" href="/static/todo.css">
+    <link rel="stylesheet" href="/static/custom.css">
+    
+<link rel="stylesheet" href="/static/kico.css">
+<link rel="stylesheet" href="/static/hingle.css">
+
+    
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta property="og:site_name" content="guochuan">
+    <meta property="og:title" content="epipolar-geometry"/>
+    
+    
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <header>
+    <div class="head-title">
+        <h4>guochuan</h4>
+    </div>
+    <div class="head-action">
+        <div class="toggle-btn"></div>
+        <div class="light-btn"></div>
+        <div class="search-btn"></div>
+    </div>
+    <form class="head-search" method="post">
+        <input type="text" name="s" placeholder="搜索什么？">
+    </form>
+    <nav class="head-menu">
+        <a href="/">首页</a>
+        <div class="has-child">
+            <a href>分类</a>
+            <div class="sub-menu">
+                <a class="category-link" href="/categories/computer-vision/">computer vision</a><a class="category-link" href="/categories/reinforcement-learning/">reinforcement learning</a>
+            </div>
+        </div>
+        
+            <a href="/about">关于我</a>
+        
+            <a href="/friends">朋友们</a>
+        
+    </nav>
+</header>
+
+    <main>
+    <div class="wrap min">
+        <section class="post-title">
+            <h2>epipolar-geometry</h2>
+            <div class="post-meta">
+<time class="date">2025.08.30</time>
+
+    <time class="date updated-time" style="margin-left: 10px; color: #999;">
+        (Updated: 2025.09.01)
+    </time>
+
+            
+                <span class="category"><a class="category-link" href="/categories/computer-vision/">computer vision</a></span>
+            
+            </div>
+        </section>
+        <article class="post-content">
+        
+            <h1 id="The-Eight-Point-Algorithm"><a href="#The-Eight-Point-Algorithm" class="headerlink" title="The Eight-Point Algorithm"></a>The Eight-Point Algorithm</h1><blockquote>
+<p>The assumption that we can get Fundament matrix seems rather large which is defined by a matrix product of the camera parameters But it&#39;s possible to get if given two images of the same scene without knowing the extrinsic or intrinsic parameters of the camera. The method we will discuss is doing so called <strong>Eight-Point Algorithm</strong>.</p>
+</blockquote>
+<h2 id="Core-observations"><a href="#Core-observations" class="headerlink" title="Core observations"></a>Core observations</h2><p>Each correspondence $p_i=(u_i,v_i,1)$ and $p_i&#39;=(u_i&#39;,v_i&#39;,1)$ gives us the epipolar constraint:</p>
+<script type="math/tex; mode=display">
+p_i^TFp_i'=0</script><p>We can expand this formula as follows:</p>
+<script type="math/tex; mode=display">
+\begin{bmatrix}
+    u_iu_i'&u_iv_i'&u_i&v_iu_i'&v_iv_i'&v_i&u_i'&v_i'&1
+\end{bmatrix} \begin{bmatrix}
+    F_{11} \\\\ F_{12} \\\\ F_{13} \\\\ \vdots \\\\ F_{33} 
+\end{bmatrix}=0</script><p>Since this constraint contains one degree of freedom,but the Fundamental matrix has 8 degrees of freedom (because it&#39;s up to scale). So we need 8 of these constraints to determine the Fundamental matrix:</p>
+<script type="math/tex; mode=display">
+\begin{bmatrix}
+    u_1u_1'&u_1v_1'&u_1&v_1u_1'&v_1v_1'&v_1&u_1'&v_1'&1 \\\\
+    \vdots \\\\
+    u_8u_8'&u_8v_8'&u_8&v_8u_8'&v_8v_8'&v_8&u_8'&v_8'&1
+\end{bmatrix} \begin{bmatrix}
+    F_{11} \\\\ F_{12} \\\\ F_{13} \\\\ \vdots \\\\ F_{33} 
+\end{bmatrix}=0</script><h2 id="SVD-method"><a href="#SVD-method" class="headerlink" title="SVD method"></a>SVD method</h2><p>The eight constrains can be compactly written as</p>
+<script type="math/tex; mode=display">
+W\textbf{f}=0</script><p>where  $W \in \R ^{N\times 9},\textbf{f}\in \R^{9}$. In  practice, it often is better to use more than eight correspondences and<br>create a larger $W$ matrix to reduce noisy measurements. We can use <strong>SVD</strong>  to get a good estimate of Fundamental matrix $\hat{F}$：Let $W=U\Sigma V^T$,$\hat{\textbf{f}}$ is the last column of $V$. We may get a full rank of $\hat{F}$,however we know that fundamental matrix has rank-2. So we will use $\textbf{SVD}$ again to get the best rank-2 estimation of $\hat{F}$. So we need to solve the following optimization problem:</p>
+<script type="math/tex; mode=display">
+\begin{array}{ll}
+\min\limits_{F} & \left|\left| F-\hat{F}\right|\right|_F \\\\
+\text{subject to} & \det{F}=0
+\end{array}</script><p>This problem is again solved by $\textbf{SVD}$, where $\hat{F}=U\Sigma V^T$. The best rank-2 approximation $F$ is found by</p>
+<script type="math/tex; mode=display">
+F=U\begin{bmatrix}
+    \Sigma_1 &0&0\\\\
+    0 & \Sigma_2&0\\\\
+    0&0&0
+\end{bmatrix}V^T</script><blockquote>
+<p>Since $\textbf{SVD}$ is frequently met in computer vision, if you&#39;re not familiar with it as me, I strongly recommend to read <a target="_blank" rel="noopener" href="https://www.cs.cmu.edu/~venkatg/teaching/CStheory-infoage/book-chapter-4.pdf">this</a> for a profound understanding.</p>
+</blockquote>
+<h2 id="Code-implementation"><a href="#Code-implementation" class="headerlink" title="Code implementation"></a>Code implementation</h2><pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token triple-quoted-string string">'''
+LLS_EIGHT_POINT_ALG  computes the fundamental matrix from matching points using 
+linear least squares eight point algorithm
+Arguments:
+    points1 - N points in the first image that match with points2
+    points2 - N points in the second image that match with points1
+
+    Both points1 and points2 are from the get_data_from_txt_file() method
+Returns:
+    F - the fundamental matrix such that (points2)^T * F * points1 = 0
+Please see lecture notes and slides to see how the linear least squares eight
+point algorithm works
+'''</span>
+<span class="token keyword">def</span> <span class="token function">lls_eight_point_alg</span><span class="token punctuation">(</span>points1<span class="token punctuation">,</span> points2<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment"># TODO: Implement this method!</span>
+    <span class="token keyword">assert</span> <span class="token punctuation">(</span>points1<span class="token punctuation">.</span>shape <span class="token operator">==</span> points2<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+    W <span class="token operator">=</span> np<span class="token punctuation">.</span>ones<span class="token punctuation">(</span><span class="token punctuation">(</span>points1<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token number">9</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    W<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">=</span>points2<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">*</span>points1<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span>
+    W<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">=</span>points2<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">*</span>points1<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span>
+    W<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token operator">=</span>points2<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span>
+    W<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token operator">=</span>points1<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">*</span>points2<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span>
+    W<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">]</span><span class="token operator">=</span>points1<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">*</span>points2<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span>
+    W<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">]</span><span class="token operator">=</span>points2<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span>
+    W<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">]</span><span class="token operator">=</span>points1<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span>
+    W<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">7</span><span class="token punctuation">]</span><span class="token operator">=</span>points1<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span>
+    f_initial <span class="token operator">=</span> np<span class="token punctuation">.</span>linalg<span class="token punctuation">.</span>svd<span class="token punctuation">(</span>W<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">]</span>
+    U<span class="token punctuation">,</span>S<span class="token punctuation">,</span>V_t <span class="token operator">=</span> np<span class="token punctuation">.</span>linalg<span class="token punctuation">.</span>svd<span class="token punctuation">(</span>f_initial<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">,</span>full_matrices<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span>
+    U_trunk<span class="token punctuation">,</span>S_trunk<span class="token punctuation">,</span>V_t_trunk <span class="token operator">=</span> U<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span>np<span class="token punctuation">.</span>diag<span class="token punctuation">(</span>S<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span>V_t<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">]</span>
+    F <span class="token operator">=</span> U_trunk@S_trunk@V_t_trunk
+    <span class="token keyword">return</span> F<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h1 id="The-Normalized-Eight-Point-Algorithm"><a href="#The-Normalized-Eight-Point-Algorithm" class="headerlink" title="The  Normalized Eight-Point Algorithm"></a>The  Normalized Eight-Point Algorithm</h1><h2 id="The-problem-of-standard-Eight-Point-Algorithm"><a href="#The-problem-of-standard-Eight-Point-Algorithm" class="headerlink" title="The problem of standard Eight-Point Algorithm"></a>The problem of standard Eight-Point Algorithm</h2><p>$W$ should have one singular value equal to (or near) zero, with the other singular values being zero. However, the correspondences $p_i=(u_i,v_i,1)$ will often have extremely large values in the first and second coordinates(i.e. $p_i=(1800,1000,1)$). If the image points used to construct $W$ are in a relatively small region of the image(i.e. $W=W_c+\Delta W$. Maybe $W_c[:-1]$ is greate larger than $\Delta W[:-1]$). If we let $W=\overline{w}\cdot \textbf{1}^T+[\delta w_1;\delta w_2;...;\delta w_9]$, then we say  $W$ has dominated term $\overline{w}\cdot \textbf{1}^T$ which has rank-1. According to <em>Perturbation theory of SVD</em>:</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    &\sigma_1(W)\approx \sigma_1(\overline{w}\cdot \textbf{1}^T) \approx O(u_0u_0') \quad (\text{large!})\\\\
+    &\sigma_2(W) \approx \sigma_1(\Delta W)\approx O(\delta u,\delta v) \quad (\text{samll})\\\\
+    & \dots \\\\
+    &\sigma_9(W) \approx \sigma_7(\Delta W)\approx O(\delta u,\delta v) \quad (\text{samll})
+\end{aligned}</script><p>So the <em>condition number</em> of $W$: $\kappa=\frac{\sigma_1}{\sigma_9}$ will be ralatively large which causes a little puturbation make a great difference to $\textbf{f}$. </p>
+<p>If you have the experience of learning <em>numerical analysis</em>, a common way to deal with this unstability is: <strong>Normalization</strong>.</p>
+<h2 id="Normalization"><a href="#Normalization" class="headerlink" title="Normalization"></a>Normalization</h2><p>The key intuition is that since the main perturbation lies in the large coordinates $(u_i,v_i)$, we can make them small by <strong>translation</strong> and <strong>scaling</strong>. To translate, the origin of the new coordinate system should be located<br>at the centroid of the image points:</p>
+<script type="math/tex; mode=display">
+x_i'=x_i-\frac{1}{N}\sum_{j=1}^Nx_j</script><p>Their coordinates maybe also large, so we multiply each image point by a scaling factor such that the mean square distance of the transformed image points from the origin should be 2 pixels. To calculate the scaling factor $s$:</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    & x_i''= sx_i'\\\\
+    & \frac{1}{N}\sum_{i=1}^N ||x_i''||^2=2 \\\\
+    & \Rightarrow \frac{1}{N}\sum_{i=1}^Ns^2||x_i-\overline{x}||^2=2 \\\\
+    & \Rightarrow s=\sqrt{\frac{2N}{\sum_{i=1}^N||x_i-\overline{x}||^2}}
+\end{aligned}</script><p>Thus we construct transformation matrices $T,T&#39;$:</p>
+<script type="math/tex; mode=display">
+T=\begin{bmatrix}
+    \frac{1}{s} &0&-\frac{\overline{u}}{s} \\\\
+    0 &\frac{1}{s} & -\frac{\overline{v}}{s} \\\\ 0&0&1
+\end{bmatrix}</script><p>$T&#39;$ is the same. So $q_i=Tp_i \quad q_i&#39;=T&#39;p_i&#39;$.</p>
+<h2 id="Denormalization"><a href="#Denormalization" class="headerlink" title="Denormalization"></a>Denormalization</h2><p>Using the new, normalized coordinates, we can compute the new $F_q$ using the regular least-squares Eight Point Algorithm. Since $p_i ^T T^T F_qT&#39;p_i&#39;=0$ and $p_i^TFp_i&#39;=0$, we finally get $F=T^T F_qT&#39;$.</p>
+<h2 id="Code-implementation-1"><a href="#Code-implementation-1" class="headerlink" title="Code implementation"></a>Code implementation</h2><pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token triple-quoted-string string">'''
+NORMALIZED_EIGHT_POINT_ALG  computes the fundamental matrix from matching points
+using the normalized eight point algorithm
+Arguments:
+    points1 - N points in the first image that match with points2
+    points2 - N points in the second image that match with points1
+
+    Both points1 and points2 are from the get_data_from_txt_file() method
+Returns:
+    F - the fundamental matrix such that (points2)^T * F * points1 = 0
+Please see lecture notes and slides to see how the normalized eight
+point algorithm works
+'''</span>
+<span class="token keyword">def</span> <span class="token function">normalized_eight_point_alg</span><span class="token punctuation">(</span>points1<span class="token punctuation">,</span> points2<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    x1_mean <span class="token operator">=</span> np<span class="token punctuation">.</span>mean<span class="token punctuation">(</span>points1<span class="token punctuation">,</span>axis<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span>
+    x2_mean <span class="token operator">=</span> np<span class="token punctuation">.</span>mean<span class="token punctuation">(</span>points2<span class="token punctuation">,</span>axis<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span>
+    s1 <span class="token operator">=</span> <span class="token number">1</span><span class="token operator">/</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>sqrt<span class="token punctuation">(</span>np<span class="token punctuation">.</span>mean<span class="token punctuation">(</span>np<span class="token punctuation">.</span><span class="token builtin">sum</span><span class="token punctuation">(</span><span class="token punctuation">(</span>points1<span class="token operator">-</span>x1_mean<span class="token punctuation">)</span><span class="token operator">**</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token operator">/</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    s2 <span class="token operator">=</span> <span class="token number">1</span><span class="token operator">/</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>sqrt<span class="token punctuation">(</span>np<span class="token punctuation">.</span>mean<span class="token punctuation">(</span>np<span class="token punctuation">.</span><span class="token builtin">sum</span><span class="token punctuation">(</span><span class="token punctuation">(</span>points2<span class="token operator">-</span>x2_mean<span class="token punctuation">)</span><span class="token operator">**</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token operator">/</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+    T1<span class="token operator">=</span>np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    T1<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">=</span>s1
+    T1<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">=</span>s1
+    T1<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">=</span> <span class="token operator">-</span>s1<span class="token operator">*</span>x1_mean<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+    T1<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">=</span> <span class="token operator">-</span>s1<span class="token operator">*</span>x1_mean<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+    T1<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token operator">=</span><span class="token number">1</span>
+    T2<span class="token operator">=</span>np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    T2<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">=</span>s2
+    T2<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">=</span>s2
+    T2<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">=</span> <span class="token operator">-</span>s2<span class="token operator">*</span>x2_mean<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+    T2<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">=</span> <span class="token operator">-</span>s2<span class="token operator">*</span>x2_mean<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+    T2<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token operator">=</span><span class="token number">1</span>
+
+    norm_points1 <span class="token operator">=</span> points1@T1
+    norm_points2 <span class="token operator">=</span> points2@T2
+    F_norm <span class="token operator">=</span> lls_eight_point_alg<span class="token punctuation">(</span>norm_points1<span class="token punctuation">,</span>norm_points2<span class="token punctuation">)</span>
+    F <span class="token operator">=</span> T2@F_norm@T1<span class="token punctuation">.</span>T
+    <span class="token keyword">return</span> F<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h1 id="Image-Rectification"><a href="#Image-Rectification" class="headerlink" title="Image Rectification"></a>Image Rectification</h1><h2 id="When-two-images-are-parallel-to-each-other"><a href="#When-two-images-are-parallel-to-each-other" class="headerlink" title="When two images are parallel to each other..."></a>When two images are parallel to each other...</h2><p>Let&#39;s first compute the Essential matrix $E$ in the<br>case of parallel image planes. We assume that the two cameras have the same $K$ and that there in no relative rotation between the camares ($R=I$). In this case, let&#39;s assume that there is only a translation alone $x$-axis, giving $T=(T_x,0,0)$. This gives:</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    E=\left[T_{\times}\right]R=\begin{bmatrix}
+        0&0&0\\\\
+        0&0&-T_x \\\\
+        0&T_x&0
+    \end{bmatrix}
+\end{aligned}</script><p>Once $K$ is known, we can find the directions of the epipolar lines associated with points in the image planes. Let us compute the direction of the<br>epipolar line $l$ associated with point $p&#39;$:</p>
+<script type="math/tex; mode=display">
+l=Ep'=\begin{bmatrix}
+        0&0&0\\\\
+        0&0&-T_x \\\\
+        0&T_x&0
+    \end{bmatrix} \begin{bmatrix}
+        u' \\\\v'\\\\ 1
+    \end{bmatrix}=\begin{bmatrix}
+        0 \\\\ -T_x \\\\ T_xv'
+    \end{bmatrix}</script><p>We see that the direction of $l$ is <strong>horizontal</strong>, as is the direction of $l&#39;$. If we use the <strong>epipolar constraint</strong> $p^TEp&#39;=0$, we get:</p>
+<script type="math/tex; mode=display">
+v=v'</script><p>So if we can let two images parallel, we can get:</p>
+<ul>
+<li>The epipolar lines are horizontal</li>
+<li>Each pair of correspondences $p_i,p_i&#39;$ satisfy that$v_i=v_i&#39;$</li>
+</ul>
+<p>So next we will talk about how can we make any two images parallel, which is also called <strong>rectification</strong>.</p>
+<h2 id="General-process"><a href="#General-process" class="headerlink" title="General process"></a>General process</h2><p>Before we talk about the algotithm, let&#39;s think about what we have: <strong>just image points</strong>. So the only way to proceed is to get Fundamental matrix $F$ estimated by <strong>Normalized Eight Point Algorithm</strong>. </p>
+<p>As we get Fundamental matrix, we can compute epipolar lines $l_i,l_i&#39;$ for each correspondence $p_i$ and $p_i&#39;$.  We know that $e,e&#39;$ lie in all epipolar lines in each image. Thus we can formulate a linear system of equations and solve using $\textbf{SVD}$ to find the epipole $e$:</p>
+<script type="math/tex; mode=display">
+\begin{bmatrix}
+    l_1^T \\\\
+    \vdots \\\\
+    l_n^T
+\end{bmatrix}e=0</script><p>After finding the epipoles $e$ and $e&#39;$, we will notice that if they are points at infinity alone the horizontal axis, the two images are parallel. So next we should find a homography to map epipole $e$ to infinity alone the horizontal axis. Specifically, this means that we<br>want to find a pair of homographies  $H_1$ and $H_2$ that we can apply to the imagesto map the epipoles to infinity.</p>
+<p>So we conclude that how to <strong>rectify</strong> images:</p>
+<ul>
+<li>First, use <strong>Normalized Eight Point Algorithm</strong> to find Fundamental matrix</li>
+<li>Second, use the Fundamental matrix to find each point&#39;s epipolar line</li>
+<li>Third，use the relationship between epipolar lines and epipole to estimate epipole by $\textbf{SVD}$.</li>
+<li>Finally, since the epipole $e$ may be not points at infinity, we should find homography map $H_1,H_2$ to map the epipoles to infinity. Once they are at infinity alone horizontal axis, then two images are parallel.</li>
+</ul>
+<h2 id="Find-H-1-and-H-2"><a href="#Find-H-1-and-H-2" class="headerlink" title="Find $H_1$ and $H_2$"></a>Find $H_1$ and $H_2$</h2><p>Let&#39;s start by finding a homography $H_2$ that maps the second epipole $e&#39;$ to a point on the horizontal axis at infinity $(f,0,0)$. We can consider the homography as the process of translation and rotation.</p>
+<p>We can apply a <strong>transformation</strong> that translates the second image such that the center is at $(0,0,1)$ in homogeneous coordinates:</p>
+<script type="math/tex; mode=display">
+T=\begin{bmatrix}
+    1&0&-\frac{\text{weight}}{2}\\\\
+    0&1&-\frac{\text{height}}{2}\\\\
+    0&0&1
+\end{bmatrix}</script><p>After translating, if the translated epipole $Te&#39;$ is located at $(e_1&#39;,e_2&#39;,1)$, then the rotation applied is:</p>
+<script type="math/tex; mode=display">
+R=\begin{bmatrix}
+    \alpha \frac{e_1'}{\sqrt{e_1'^2+e_2'^2}} & \alpha \frac{e_2'}{\sqrt{e_1'^2+e_2'^2}} &0 \\\\
+    -\alpha \frac{e_2'}{\sqrt{e_1'^2+e_2'^2}} & \alpha \frac{e_1'}{\sqrt{e_1'^2+e_2'^2}} &0 \\\\
+    0&0&1
+\end{bmatrix}</script><p>where $\alpha=1$ if $e_1&#39; \geq 0$ and $\alpha = -1$ otherwise.</p>
+<p>Then the coordinate becomes $(f,0,1)$. To bring the point to infinity on the horizontal axis, apply a transformation:</p>
+<script type="math/tex; mode=display">
+G=\begin{bmatrix}
+    1&0&0\\\\
+    0&1&0\\\\
+    -\frac{1}{f} &0&1
+\end{bmatrix}</script><p>So the final $H_2=T^{-1}GRT$</p>
+<h2 id="Code-implementation-2"><a href="#Code-implementation-2" class="headerlink" title="Code implementation"></a>Code implementation</h2><pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token triple-quoted-string string">'''
+COMPUTE_H computes a homography to map an epipole to infinity along the horizontal axis 
+Arguments:
+    e - the epipole
+    im2 - the image
+Returns:
+    H - homography matrix
+'''</span>
+<span class="token keyword">def</span> <span class="token function">compute_H</span><span class="token punctuation">(</span>e<span class="token punctuation">,</span> im<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    height <span class="token operator">=</span> im<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+    width <span class="token operator">=</span> im<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+    T <span class="token operator">=</span> np<span class="token punctuation">.</span>eye<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>
+    T<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token operator">-</span>width<span class="token operator">/</span><span class="token number">2</span>
+    T<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token operator">-</span>height<span class="token operator">/</span><span class="token number">2</span>
+    translated_e <span class="token operator">=</span> e@T<span class="token punctuation">.</span>T
+    alpha <span class="token operator">=</span> <span class="token number">1</span> <span class="token keyword">if</span> translated_e<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">>=</span><span class="token number">0</span> <span class="token keyword">else</span> <span class="token operator">-</span><span class="token number">1</span>
+    R <span class="token operator">=</span> np<span class="token punctuation">.</span>eye<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>
+    R<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> alpha<span class="token operator">*</span>translated_e<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">/</span>np<span class="token punctuation">.</span>sqrt<span class="token punctuation">(</span>translated_e<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">**</span><span class="token number">2</span><span class="token operator">+</span>translated_e<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">**</span><span class="token number">2</span><span class="token punctuation">)</span>
+    R<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">=</span> alpha<span class="token operator">*</span>translated_e<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">/</span>np<span class="token punctuation">.</span>sqrt<span class="token punctuation">(</span>translated_e<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token operator">**</span><span class="token number">2</span><span class="token operator">+</span>translated_e<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">**</span><span class="token number">2</span><span class="token punctuation">)</span>
+    R<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token operator">-</span>R<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span>
+    R<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">=</span> R<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span>
+    rotated_e <span class="token operator">=</span> translated_e@R<span class="token punctuation">.</span>T
+    G <span class="token operator">=</span> np<span class="token punctuation">.</span>eye<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>
+    G<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span><span class="token operator">/</span>rotated_e<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+    <span class="token keyword">return</span> np<span class="token punctuation">.</span>linalg<span class="token punctuation">.</span>inv<span class="token punctuation">(</span>T<span class="token punctuation">)</span>@G@R@T<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>Since I currently haven&#39;t fully understood the algorithm of finding $H_1$ by minimizing the sum of squared distance from projected $p_i$ to $p_i&#39;$, I just show code implementation:<br><pre class="line-numbers language-python" data-language="python"><code class="language-python"><span class="token triple-quoted-string string">'''
+COMPUTE_MATCHING_HOMOGRAPHIES determines homographies H1 and H2 such that they
+rectify a pair of images
+Arguments:
+    e2 - the second epipole
+    F - the Fundamental matrix
+    im2 - the second image
+    points1 - N points in the first image that match with points2
+    points2 - N points in the second image that match with points1
+Returns:
+    H1 - the homography associated with the first image
+    H2 - the homography associated with the second image
+'''</span>
+<span class="token keyword">def</span> <span class="token function">compute_matching_homographies</span><span class="token punctuation">(</span>e2<span class="token punctuation">,</span> F<span class="token punctuation">,</span> im2<span class="token punctuation">,</span> points1<span class="token punctuation">,</span> points2<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">skew_symmetric_matrix</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token operator">-</span>e<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span> e<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+                         <span class="token punctuation">[</span>e<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token operator">-</span>e<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+                         <span class="token punctuation">[</span><span class="token operator">-</span>e<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> e<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    <span class="token comment"># e1 = compute_epipole(F.T)</span>
+    M <span class="token operator">=</span> skew_symmetric_matrix<span class="token punctuation">(</span>e2<span class="token punctuation">)</span> @ <span class="token punctuation">(</span>F<span class="token punctuation">)</span> <span class="token operator">+</span> np<span class="token punctuation">.</span>outer<span class="token punctuation">(</span>e2<span class="token punctuation">,</span> np<span class="token punctuation">.</span>ones<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    H2 <span class="token operator">=</span> compute_H<span class="token punctuation">(</span>e2<span class="token punctuation">,</span> im2<span class="token punctuation">)</span>
+    points1_hat <span class="token operator">=</span> points1@M<span class="token punctuation">.</span>T@H2<span class="token punctuation">.</span>T
+    points1_hat <span class="token operator">/=</span> points1_hat<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span>np<span class="token punctuation">.</span>newaxis<span class="token punctuation">]</span>
+    points2_hat <span class="token operator">=</span> points2@H2<span class="token punctuation">.</span>T
+    points2_hat <span class="token operator">/=</span> points2_hat<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span>np<span class="token punctuation">.</span>newaxis<span class="token punctuation">]</span>
+    a <span class="token operator">=</span> np<span class="token punctuation">.</span>linalg<span class="token punctuation">.</span>lstsq<span class="token punctuation">(</span>points1_hat<span class="token punctuation">,</span> points2_hat<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> rcond<span class="token operator">=</span><span class="token boolean">None</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+    Ha <span class="token operator">=</span> np<span class="token punctuation">.</span>eye<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>
+    Ha<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> a
+    H1 <span class="token operator">=</span> Ha@H2@M
+    <span class="token keyword">return</span> H1<span class="token punctuation">,</span> H2<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre></p>
+
+        </article>
+        <section class="post-near">
+            <ul>
+                
+                    <li>上一篇: <a href="/2025/09/01/stereo-systems/">Stereo Systems</a></li>
+                
+                
+                    <li>下一篇: 看完啦 (つд⊂)</li>
+                
+            </ul>
+        </section>
+        
+            <section class="post-tags">
+            <a class="-none-link" href="/tags/computer-vision/" rel="tag">computer vision</a><a class="-none-link" href="/tags/math/" rel="tag">math</a>
+            </section>
+        
+    
+        <section class="post-author">
+        
+            <figure class="author-avatar">
+                <img src="https://sdn.geekzu.org/avatar/d22eb460ecab37fcd7205e6a3c55c228?s=200&r=X&d=" alt="Hingle" />
+            </figure>
+        
+            <div class="author-info">
+                <h4>Hingle</h4>
+                <p>请在这里设置你的作者信息</p>
+            </div>
+        </section>
+    
+    </div>
+</main>
+
+    <footer>
+    <div class="buttons">
+        <button class="to-top" href="#"></button>
+    </div>
+    <div class="wrap min">
+        <section class="widget">
+            <div class="row">
+                <div class="col-m-4">
+                    <h3 class="title-recent">最新文章：</h3>
+                    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2025/09/02/rlbook-reading-ch1-intro/">rlbook reading: ch1-intro</a></li><li class="post-list-item"><a class="post-list-link" href="/2025/09/01/stereo-systems/">Stereo Systems</a></li><li class="post-list-item"><a class="post-list-link" href="/2025/08/30/epipolar-geometry/">epipolar-geometry</a></li></ul>
+                </div>
+                <div class="col-m-4">
+                    <h3 class="title-date">时光机：</h3>
+                    <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/09/">九月 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/08/">八月 2025</a></li></ul>
+                </div>
+                <div class="col-m-4">
+                    <h3 class="title-tags">标签云：</h3>
+                    <a href="/tags/3D-Vision/" style="font-size: 10px;">3D Vision</a> <a href="/tags/computer-vision/" style="font-size: 20px;">computer vision</a> <a href="/tags/math/" style="font-size: 10px;">math</a> <a href="/tags/read-book/" style="font-size: 10px;">read book</a> <a href="/tags/rl/" style="font-size: 10px;">rl</a>
+                </div>
+            </div>
+        </section>
+        <section class="sub-footer">
+            <p>© 2025 <a href="/">guochuan</a>. All Rights Reserved. Theme By <a href="https://github.com/Dreamer-Paul/Hingle" target="_blank" rel="nofollow">Hingle</a>.</p>
+        </section>
+    </div>
+</footer>
+
+
+<script src="/static/kico.js"></script>
+<script src="/static/hingle.js"></script>
+<script src="/static/todo.js"></script>
+
+
+
+<script>var hingle = new Paul_Hingle({"copyright":true,"night":true});</script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
