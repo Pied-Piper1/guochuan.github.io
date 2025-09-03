@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         statusDiv.className = `environment-status ${isLocalhost ? 'local' : 'production'}`;
         statusDiv.innerHTML = isLocalhost ? 
             '✅ 本地环境 - 可以编辑待办事项' : 
-            '🔒 生产环境 - 只能查看待办事项';
+            '🔒 只能查看';
         
         // 插入到待办事项列表前面
         todoList.parentNode.insertBefore(statusDiv, todoList);
