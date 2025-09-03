@@ -3,7 +3,7 @@
   <head>
     
     <meta charset="UTF-8">
-    <title>2025 年 9 月 - guochuan</title>
+    <title>Active and Volumetric Stereo - guochuan</title>
     <link rel="shortcut icon" href="/static/img/icon.png">
     <link rel="icon" href="/static/img/icon.png" sizes="192x192"/>
     <link rel="stylesheet" href="/static/todo.css">
@@ -17,9 +17,24 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <meta property="og:site_name" content="guochuan">
-    <meta property="og:title" content=""/>
+    <meta property="og:title" content="Active and Volumetric Stereo"/>
     
   
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      processEscapes: true,
+      processEnvironments: true
+    },
+    options: {
+      skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+    }
+  };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
 <meta name="generator" content="Hexo 7.3.0"></head>
 
   <body>
@@ -53,88 +68,56 @@
 
     <main>
     <div class="wrap min">
-        <section class="home-title">
-            
-            <h1>“2025 年 9 月”</h1>
-        </section>
-        <section class="home-posts">
-    
-    <div class="post-item">
-        <h2>
-            <a href="/2025/09/03/Active-and-Volumetric-Stereo/">Active and Volumetric Stereo</a>
-        </h2>
-    
-        <p>
-Traditionally, the main idea of stereo is to use corresponding points $p$ and $p&amp;#39;$ to estima...</p>
-    
-        <div class="post-meta">
-            <time class="date">2025.09.03</time>
+        <section class="post-title">
+            <h2>Active and Volumetric Stereo</h2>
+            <div class="post-meta">
+<time class="date">2025.09.03</time>
 
-    <time class="date updated-time" style="margin-left: 5px; color: #999; font-size: 0.9em;">
-        (Updated: 09.03)
+    <time class="date updated-time" style="margin-left: 10px; color: #999;">
+        (Updated: 2025.09.03)
     </time>
 
             
                 <span class="category"><a class="category-link" href="/categories/computer-vision/">computer vision</a></span>
             
-            
-                <span class="tags"><a class="-none-link" href="/tags/3D-Vision/" rel="tag">3D Vision</a>，<a class="-none-link" href="/tags/computer-vision/" rel="tag">computer vision</a></span>
-            
-        </div>
-    </div>
-    
-    <div class="post-item">
-        <h2>
-            <a href="/2025/09/02/rlbook-reading-ch1-intro/">rlbook reading: ch1-intro</a>
-        </h2>
-    
-        <p>
-Learning from interactions is a fundamental idea underlying nearly all theories of learning and ...</p>
-    
-        <div class="post-meta">
-            <time class="date">2025.09.02</time>
-
-    <time class="date updated-time" style="margin-left: 5px; color: #999; font-size: 0.9em;">
-        (Updated: 09.03)
-    </time>
-
-            
-                <span class="category"><a class="category-link" href="/categories/reinforcement-learning/">reinforcement learning</a></span>
-            
-            
-                <span class="tags"><a class="-none-link" href="/tags/read-book/" rel="tag">read book</a>，<a class="-none-link" href="/tags/rl/" rel="tag">rl</a></span>
-            
-        </div>
-    </div>
-    
-    <div class="post-item">
-        <h2>
-            <a href="/2025/09/01/stereo-systems/">Stereo Systems</a>
-        </h2>
-    
-        <p>In previous notes, we have talked about how adding additional viewpoints of a scene can greatly e...</p>
-    
-        <div class="post-meta">
-            <time class="date">2025.09.01</time>
-
-    <time class="date updated-time" style="margin-left: 5px; color: #999; font-size: 0.9em;">
-        (Updated: 09.02)
-    </time>
-
-            
-                <span class="category"><a class="category-link" href="/categories/computer-vision/">computer vision</a></span>
-            
-            
-                <span class="tags"><a class="-none-link" href="/tags/3D-Vision/" rel="tag">3D Vision</a>，<a class="-none-link" href="/tags/computer-vision/" rel="tag">computer vision</a></span>
-            
-        </div>
-    </div>
-    
-</section>
-
-        <section class="page-navigator">
-            <span class="page-number current">1</span>
+            </div>
         </section>
+        <article class="post-content">
+        
+            <blockquote>
+<p>Traditionally, the main idea of <em>stereo</em> is to use corresponding points $p$ and $p&#39;$ to estimate the location of a 3D point by point $P$ using triangulation. But how do we knwow a point $p$ in one image actually corresponds to $p&#39;$ in another. I will talk about alternative techniques that work well in reconstructing the 3D structure.</p>
+</blockquote>
+<h1 id="Active-stereo-mitigating-the-correspondence-problem"><a href="#Active-stereo-mitigating-the-correspondence-problem" class="headerlink" title="Active stereo - mitigating the correspondence problem"></a>Active stereo - mitigating the correspondence problem</h1><p>The main idea is to replace one of the cameras with a device that interacts with the 3D environment, usually by projecting a pattern onto the object that is easily identifiable from the second camera. The new projector-camera pair defines the same epipolar geometry  that we introduced for camera pairs. The image plane of the replaced camera is replaced with a <em>projector virtual plane</em>.<br>As the figure shows:<br><img src="/2025/09/03/Active-and-Volumetric-Stereo/fig1.png" class="" title="alt text"></p>
+
+        </article>
+        <section class="post-near">
+            <ul>
+                
+                    <li>上一篇: 看完啦 (つд⊂)</li>
+                
+                
+                    <li>下一篇: <a href="/2025/09/02/rlbook-reading-ch1-intro/">rlbook reading: ch1-intro</a></li>
+                
+            </ul>
+        </section>
+        
+            <section class="post-tags">
+            <a class="-none-link" href="/tags/3D-Vision/" rel="tag">3D Vision</a><a class="-none-link" href="/tags/computer-vision/" rel="tag">computer vision</a>
+            </section>
+        
+    
+        <section class="post-author">
+        
+            <figure class="author-avatar">
+                <img src="https://sdn.geekzu.org/avatar/d22eb460ecab37fcd7205e6a3c55c228?s=200&r=X&d=" alt="Hingle" />
+            </figure>
+        
+            <div class="author-info">
+                <h4>Hingle</h4>
+                <p>请在这里设置你的作者信息</p>
+            </div>
+        </section>
+    
     </div>
 </main>
 
