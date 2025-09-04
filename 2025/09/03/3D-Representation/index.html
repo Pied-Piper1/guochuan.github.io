@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    
+    <meta charset="UTF-8">
+    <title>3D Representation - guochuan</title>
+    <link rel="shortcut icon" href="/static/img/icon.png">
+    <link rel="icon" href="/static/img/icon.png" sizes="192x192"/>
+    <link rel="stylesheet" href="/static/todo.css">
+    <link rel="stylesheet" href="/static/custom.css">
+    
+<link rel="stylesheet" href="/static/kico.css">
+<link rel="stylesheet" href="/static/hingle.css">
+
+    
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta property="og:site_name" content="guochuan">
+    <meta property="og:title" content="3D Representation"/>
+    
+  
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      processEscapes: true,
+      processEnvironments: true
+    },
+    options: {
+      skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+    }
+  };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <header>
+    <div class="head-title">
+        <h4>guochuan</h4>
+    </div>
+    <div class="head-action">
+        <div class="toggle-btn"></div>
+        <div class="light-btn"></div>
+        <div class="search-btn"></div>
+    </div>
+    <form class="head-search" method="post">
+        <input type="text" name="s" placeholder="搜索什么？">
+    </form>
+    <nav class="head-menu">
+        <a href="/">首页</a>
+        <div class="has-child">
+            <a href>分类</a>
+            <div class="sub-menu">
+                <a class="category-link" href="/categories/computer-vision/">computer vision</a><a class="category-link" href="/categories/reinforcement-learning/">reinforcement learning</a>
+            </div>
+        </div>
+        
+            <a href="/about">关于我</a>
+        
+            <a href="/friends">朋友们</a>
+        
+    </nav>
+</header>
+
+    <main>
+    <div class="wrap min">
+        <section class="post-title">
+            <h2>3D Representation</h2>
+            <div class="post-meta">
+<time class="date">2025.09.03</time>
+
+    <time class="date updated-time" style="margin-left: 10px; color: #999;">
+        (Updated: 2025.09.04)
+    </time>
+
+            
+                <span class="category"><a class="category-link" href="/categories/computer-vision/">computer vision</a>，<a class="category-link" href="/categories/computer-vision/3D-Vision/">3D Vision</a></span>
+            
+            </div>
+        </section>
+        <article class="post-content">
+        
+            <h1 id="Comparison-between-2D-land-and-3D-land"><a href="#Comparison-between-2D-land-and-3D-land" class="headerlink" title="Comparison between 2D-land and 3D-land"></a>Comparison between 2D-land and 3D-land</h1><p>Working with images in 2D feels almost effortless. No matter whether a picture comes from your phone, a DSLR, or an old camera, it always ends up as the same thing: a grid of pixels. This simple, unified representation makes it easy to move images across tools—Photoshop, PyTorch, TensorFlow, you name it. Everything speaks the same language.<br><img src="/2025/09/03/3D-Representation/fig1.png" class="" title="alt text"></p>
+<p>But in 3D, things get messy. There isn’t just one way to represent the world. Instead, we have meshes, point clouds, voxels, implicit surfaces, CAD models, and more. Each has its strengths, but they don’t play well together. A file from one tool often won’t work in another without painful conversions.<br><img src="/2025/09/03/3D-Representation/fig2.png" class="" title="alt text"><br>That’s the big difference: 2D has pixels, 3D doesn’t. And until 3D finds its “pixel grid,” working in 3D-land will always feel more fragmented.</p>
+<p>So What&#39;s the <em>best</em> 3D representation? The answer is that it depends. <em>Acquisition,editing,animation,prediction,optimization</em> will have different prefered representations. In this blog, I will give you a overview of several <strong>3D representations</strong>, <strong>expressions in code</strong>, <strong>limitations</strong>, <strong>benefits</strong> and <strong>conversions across representations</strong>.</p>
+<h1 id="Depth-Maps"><a href="#Depth-Maps" class="headerlink" title="Depth Maps"></a>Depth Maps</h1><p>It&#39;s an <em>image</em> that represents how far each pixel $\textbf{p}$ is: $D[\textbf{p}]\in \mathbb{R}^+$. It&#39;s also expressed in pixel-grid like 2D image where the RGB value in each pixel is replaced with corresponding depth.</p>
+<p>We can also extend this representaion to capture other surface properties e.g. surface normals ($N[\textbf{p}]\in \mathbb{S}^2$ where $\mathbb{S}^2 $ is the unit squre.). We can use RGB values to express each surface point&#39;s normal vector $(x,y,z)$.</p>
+<p>However, the <em>depth map</em> representation is actually <strong>2.5D</strong> representation instead of a <strong>3D</strong> model.  Instead of capturing complete three-dimensional structure, depth maps work by associating depth properties (distance values) to individual image pixels. The representation is fundamentally tied to a particular viewpoint or image perspective. Thus we call it &quot;<em>image-dependent</em>&quot;</p>
+<h1 id="Point-Clouds"><a href="#Point-Clouds" class="headerlink" title="Point Clouds"></a>Point Clouds</h1><p>This representation is acquired in an image-like manner from sensors (from mulitple views), but it&#39;s not <em>image-dependent</em>. The full 3D structure of the scene can be captured by point clouds. It can also unify approaches independent of sensing modality (i.e. whether the 3D data was captured from LiDAR sensors, stereo cameras... it can be converted into the same point cloud format).</p>
+<p><strong>Data structure to store point clouds</strong>: they are represented as a <em>$N \times 3$</em> array where ordering does <strong>not</strong> matter (i.e. <em>unordered set</em>, unlike images). Each item of the array is a $(x,y,z)$ coordinate of some point. Like the figure shows:<br><img src="/2025/09/03/3D-Representation/fig3.png" class="" title="alt text"></p>
+<p><strong>Important features</strong>: Since the <em>Permutation Invariance</em> of the point clouds, some processing/generation methods don&#39;t work, e.g. CNN and fully connected layer, since they are permutation sensitive. So we need some processing/generation methods that are permutation invariant, e.g. <em>Point Net</em> which will be covered in future notes.</p>
+<p><strong>Extensions</strong>: Like the extensive version of <em>depth maps</em> can store surface normals, point clouds can also store each point&#39;s normal vector if we treat each point as small flat disks instead of tiny spheres. This the <strong>unordered set</strong> becomes: $\{(\textbf{p}_1,\textbf{n}_1),\dots, (\textbf{p}_N,\textbf{n}_N)\}\in \mathbb{R}^{N\times 6}$. Since we treat points as small flat disks, each disk has one well-defined surface normal. So simple, efficient lighting calculations can be derived using standard dot product operations, thus benefits rendering process.</p>
+<p><strong>Limitations</strong>: It can be easily observed that it can not explicitly capture <em>connectivity</em> information. So to mostly capture the <em>connectivity</em> information using point clouds representaion, we need to sample more points - but it&#39;s rather more efficient to simply add edges. </p>
+<h1 id="Meshes"><a href="#Meshes" class="headerlink" title="Meshes"></a>Meshes</h1><p><strong>Main idea</strong>: the main idea of this method is that the underlying surface of the object approximately comprises of many samll pieces of liear element,  such as triangular, quadrilateral. Thus more elements allow better approximation.</p>
+<p><strong>Data structure to store meshes</strong>: we need to store both the coordinates of the vertices and faces that vertices are contained in. Specifically, we need two arrays, one to store each vertices&#39; coordinates $(x,y,z)$, another to store the indices of the vertices array which make faces. The existence of the faces array captures the <em>connectivity</em> informatoin.</p>
+<p><strong>Problems</strong>: </p>
+<ul>
+<li>Ordering matters in face indices:<img src="/2025/09/03/3D-Representation/fig4.png" class="" title="alt text">
+That means, inside each face, indice $(i,j,k,l)$ and $(i,k,l,j)$ may be different.</li>
+<li>Arbitrary Polygons can be non-planar: <img src="/2025/09/03/3D-Representation/fig5.png" class="" title="alt text">
+</li>
+</ul>
+<p><strong>Solution</strong>: restrict meshes to <em>triaugular meshes</em>. That is, each face consists of three indices, forming a triangular. Thus the ordering problem inside each face and non-planar problem are solved.</p>
+<p><strong>Problem again</strong>:<br>Despite <em>triangular-meshes</em>, we can still get <em>non-manifold</em> mehses:<br><img src="/2025/09/03/3D-Representation/fig6.png" class="" title="alt text"></p>
+<blockquote>
+<p>Why do we dislike non-manifolds? Unfortunately, I am not quite sure currently and this requires my further exploration.</p>
+</blockquote>
+<p><strong>Solution again</strong>: restricting each edge connecting maximum 2 faces.</p>
+<p><strong>Problem again again</strong>:<br>We can still get disconnected surface around vertex:<br><img src="/2025/09/03/3D-Representation/fig7.png" class="" title="alt text"><br><strong>Maybe no solution</strong><br>😭😭😭</p>
+<p><strong>Benefits of Triangular Meshes</strong>:</p>
+<ul>
+<li>Efficient to compute ray-triangle intersections</li>
+<li>Easy to texture and render(common representation across graphics) <blockquote>
+<p>detailed principle may be covered in the future</p>
+</blockquote>
+</li>
+</ul>
+<p><strong>Limitations</strong>:</p>
+<ul>
+<li>Simply editting shape by modifying vertex positions is trivial,  while other changes are non-trivial. It&#39;s even more challenging when topology changes.</li>
+</ul>
+<p>So if there an alternate representation that make topology-consistent changes easier?</p>
+<h1 id="Parametric-Surfaces"><a href="#Parametric-Surfaces" class="headerlink" title="Parametric Surfaces"></a>Parametric Surfaces</h1><p>Expression:</p>
+<script type="math/tex; mode=display">
+f(\textbf{u})=\textbf{p}\in \mathbb{R}^3;\textbf{u}\in \mathcal{M}</script><p>where $f$ is a continuous funtion over a 2D manifold $\mathcal{M}$ and it parametrizes a surface. The connectivity/topology is constrained to be same as $\mathcal{M}$.</p>
+<p><strong>Benefit</strong>： It disentangles discretization(vertices/faces) from shape representation. In triangular meshes, if we want to change shapes, we must change the connectivity of the vertices and faces. The resolution of meshes is tied with the shape. This method allows to change resolution without change shapes depending on how many $\textbf{u}$ you sample to feed into $f$. Since we just changes the samples in $\mathcal{M}$ instead of $f$, the shape keeps.</p>
+<p><em>Idea</em>: We can use neural network with parameters $\theta$ to get:</p>
+<script type="math/tex; mode=display">
+f_{\theta}(\textbf{u})=\textbf{p}\in \mathbb{R}^3;\textbf{u}\in \mathbb{S}^2</script><p><strong>Limitations</strong>: Although it&#39;s easy to sample points on surface, it&#39;s hard to determine whether a query point $\textbf{q}$ is outside the shape (i.e. outside or inside the surface). It&#39;s also difficult to analytically render, since the computation of the ray-surface intersection is rather hard for arbitary $\textbf{f}$.</p>
+<h1 id="From-surface-representations-to-Volume-representations"><a href="#From-surface-representations-to-Volume-representations" class="headerlink" title="From surface representations to Volume representations"></a>From surface representations to Volume representations</h1><p>Since we have talked about <strong>point cloud</strong>,<strong>meshes</strong> and <strong>parametric surfaces</strong>. They all belong to <em>surface representations</em>. They have fundamental constraint: It&#39;s hard for them to know whether a point inside the object or not, how to fuse to objects and carve a section out of a solid object since they just model the surface of the object. In next sections, we will talk about <em>volume representations</em> which easily solve above problems. A fig briefly illustrates the differences:<br><img src="/2025/09/03/3D-Representation/fig8.png" class="" title="alt text"></p>
+<h1 id="Voxelized-3D"><a href="#Voxelized-3D" class="headerlink" title="Voxelized 3D"></a>Voxelized 3D</h1><p>We use a $(W\times H\times D)$ cuboid grid $V$ to contain the object. Each cell of grid object representing occupancy (or probability) at the cell:</p>
+<script type="math/tex; mode=display">
+V[x,y,z]\in [0,1]</script><blockquote>
+<p>Coding tips: you can use cuboid endpoints (i.e. $(x_{\min},y_{\min},z_{\min},x_{\max},y_{\max},z_{\max})$ to represent a cell&#39;s coordinate); you can also disentangle grid coordinates with real position by implementing a transformation function.</p>
+</blockquote>
+<p><strong>Limitation</strong>:  It&#39;s computationally challenging to scale resolution (grows cubically). </p>
+<h1 id="Implicit-Surfaces"><a href="#Implicit-Surfaces" class="headerlink" title="Implicit Surfaces"></a>Implicit Surfaces</h1><p><strong>Main idea</strong>: Use the zero crossing of a continuous function $\textbf{f}$ to parametrize a surface:</p>
+<script type="math/tex; mode=display">
+\{\textbf{p}\mid f(\textbf{p})=0\}</script><blockquote>
+<p>$\textbf{f}$ can be anything--- a simple function, or a NN.</p>
+</blockquote>
+<p><strong>Some properties</strong>:</p>
+<ul>
+<li>Easy <em>boolean operations</em>:<script type="math/tex; mode=display">
+\begin{aligned}
+& \cup_if_i(\textbf{p})=\min_{i}f_i(\textbf{p}) \quad (\text{Union of objects})\\
+& \cap_if_i(\textbf{p})=\max_{i}f_i(\textbf{p}) \\
+&(f-g)(\textbf{p})=\max (f(\textbf{p},-g(\textbf{p})))
+\end{aligned}</script>where $f_i(\textbf{p})&gt;0$ if $\textbf{p}$ is outside the object.<br>We can also use NN with parameter $\theta$: $\{\textbf{p}\mid f_{\theta}(\textbf{p})=0\}$ </li>
+<li><em>Signed Distance Function</em>:Additional condition can be applied to $f$: let$f(\textbf{p})$ represent (signed) distance to surface from point $\textbf{p}$. <em>SDF</em> satisfy: $||\nabla f||=1$ which will be covered in future sections.</li>
+<li><em>Harmonic Functions</em>: Addtional condition as <em>SDF</em> can be applied to $f$: $\nabla. \nabla f=0$ which will also be covered in future sections.</li>
+</ul>
+<p><strong>Limitations</strong>: Although it&#39;s easy to answer questions about occupancy, it&#39;s difficult to reason about the surface (may not even exist given an arbitraty $f$).</p>
+<h1 id="Density-field"><a href="#Density-field" class="headerlink" title="Density field"></a>Density field</h1><p>In density field, there is no notion of a surface(e.g. $f(\textbf{p})=0.1$ everywhere can represent a semi-transparent fluid)</p>
+<p>We will revisit it in more details.</p>
+<h1 id="Conversions-across-different-representations"><a href="#Conversions-across-different-representations" class="headerlink" title="Conversions across different representations"></a>Conversions across different representations</h1><p>Let&#39;s first <strong>formally</strong> define this problem: we have two representations each with parameters $\theta_1$ and $\theta_2$. We want to find a <em>differentiable</em> transformation $\mathcal{T}$ from representation1 to representation2:</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+  \theta_2=\mathcal{T}(\theta_1)
+\end{aligned}</script><p>We can use the idea from back-propagation:</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+  \text{input(e.g. image)} \xrightarrow{f_{\theta_1}}
+\text{representation1} &\xrightarrow{f_{\theta_2}}\text{representation2} &\rightarrow \mathcal{L}(\text{loss, a scaler})\\
+& \color{red}{\leftarrow \frac{\partial \mathcal{L}}{\partial \theta_2}\cdot\frac{\partial \theta_2}{\partial \theta_1} }& \color{red}{\leftarrow} \frac{\partial \mathcal{L}}{\partial \theta_2}
+\end{aligned}</script><p>So if we can compute $\frac{\partial \theta_2}{\partial \theta_1}$， then we can get $\mathcal{T}$ by back-propagation.</p>
+<h2 id="Conversions-within-volume-representation"><a href="#Conversions-within-volume-representation" class="headerlink" title="Conversions within volume representation"></a>Conversions within volume representation</h2><p>Let&#39;s begin by Conversions within volume representation. There are discrete representaion, e.g. <em>voxelized 3D</em> and  continuous representation, e.g. <em>implicit surfaces</em>.</p>
+<h3 id="From-discrete-to-continuous"><a href="#From-discrete-to-continuous" class="headerlink" title="From discrete to continuous"></a>From discrete to continuous</h3><p>The method is quite simple: <em>interpolation</em>. If $V$ (the grid of voxels) $\in \mathbb{R}$,then use <strong>Linear Interopolatoin</strong> to estimate continuous function $f$. If $V \in \mathbb{R}^2$, then <strong>Bilinear Interpolation</strong>. If $V \in \mathbb{R}^3$, then <strong>Trilinear Interpolation</strong></p>
+<h3 id="From-continuous-to-discrete"><a href="#From-continuous-to-discrete" class="headerlink" title="From continuous to discrete"></a>From continuous to discrete</h3><p>Suppose we have continuous representation:</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+  \{ \textbf{p}\mid f(\textbf{p})=0\}
+\end{aligned}</script><p>We want to transform it to discrete representation:</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+  V[\textbf{p}] \in [0,1]\\
+  \textbf{p}\in \text{grid } \mathcal{G}
+\end{aligned}</script><p>We evaluate $f$ for all points in the grid. We set $V[\textbf{p}]=sgn(f(\textbf{p}))$ or $V[\textbf{p}]=sigmoid(f(\textbf{p}))$. Since by the difinition of <em>implicit surfaces</em>: $f(p)&gt;0$ if p is inside the surface, so we can set $V[\textbf{p}]=1$ or high probability.</p>
+<p>However, to easily compute $\frac{\partial V[\textbf{p}]}{\partial f(p)}$, we often set $V[\textbf{p}]=sigmoid(f(p))$</p>
+<h2 id="Conversions-within-surface-representation"><a href="#Conversions-within-surface-representation" class="headerlink" title="Conversions within surface representation"></a>Conversions within surface representation</h2><h3 id="From-continuous-to-discrete-1"><a href="#From-continuous-to-discrete-1" class="headerlink" title="From continuous to discrete"></a>From continuous to discrete</h3><p>Suppose we have parametric surfaces:</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+  f(\textbf{u})&=\textbf{p}\in \mathbb{R}^3\\
+  \textbf{u}&\in \mathcal{M}
+\end{aligned}</script><p>We want to discretize it to <em>meshes</em>. The discretization of this process is to sample some vertices and faces that construct the meshes. The derivatives of vertex positions w.r.t can be computed, but face not. Solution is we predefine the connectivity in $\mathcal{M}$. We firstly discretize $\mathcal{M}$, get verties and face connectivity information. Then feed these sampled points to $f$ while reserving the connectivity. Thus we obtain the <em>meshes</em> representations.</p>
+<h3 id="Sample-points-on-a-triangle-mesh"><a href="#Sample-points-on-a-triangle-mesh" class="headerlink" title="Sample points on a triangle mesh"></a>Sample points on a triangle mesh</h3><p>Three ways:</p>
+<ul>
+<li>uniformly sample triangle and uniformly sample a point in the triangle</li>
+<li>with area-proportional probability and uniformly sample a point on the triangle</li>
+<li>Select a point furthest from the current set</li>
+</ul>
+<h1 id="Volumes-to-Surface"><a href="#Volumes-to-Surface" class="headerlink" title="Volumes to Surface"></a>Volumes to Surface</h1><p>We are given an <strong>input</strong>: continuous values at each cell in a discrete grid. We want the output: surface meshes.<br>We assume that each cell in the grid stores a value with surface being zero-crossing. How do we get the surface meshes?</p>
+<p>Solution: use <em>Marching Squares</em> (2D case)<a target="_blank" rel="noopener" href="https://nils-olovsson.se/articles/marching_squares/">link</a> or <em>Marching Cubes</em> (3D case) <a target="_blank" rel="noopener" href="https://graphics.stanford.edu/~mdfisher/MarchingCubes.html">link</a></p>
+<h1 id="Points-to-Meshes"><a href="#Points-to-Meshes" class="headerlink" title="Points to Meshes"></a>Points to Meshes</h1><p>It&#39;s non-trivial to define connectivity rules since the point clouds are not robust to noise. Thus directly adding edges in point clouds may not work.</p>
+<p><em>Key idea</em>: from above section, we see it&#39;s feasible to transform volumes to surface. So if we can first transform the point clouds to volume representation, then we can indirectly get meshes. </p>
+<p><em>Key idea again</em>: Points represent (noisy) samples from zero-level set of an implicit function since each point in point clouds can be noisly regard as the surface of the object. So instead of directly trying to add triangles, we can optimize an implicit function instead.</p>
+<p><strong>Problem</strong>: In ml, predicting a constantly-zero implicit function may result in a <strong>constantly-zero</strong> function.</p>
+<p><em>Solution</em>: We can use oriented point clouds. That is, we append each point&#39;s <strong>normal vector</strong> to the point clouds&#39; representaion. This method is also called <em>Possion Reconstruction</em></p>
+<h2 id="Poisson-Reconstruction"><a href="#Poisson-Reconstruction" class="headerlink" title="Poisson Reconstruction"></a>Poisson Reconstruction</h2><p><em>Key idea</em>: Find a (smoothed) indicator function whose gradient corresponds to the surface normals.</p>
+<blockquote>
+<p>A smoothed indicator function is not a strict <em>binary function</em>: inside the object, its value is 1 or near 1; outside the object, its value is 0 or near 0. From outside to inside, its values smoothly and continuously range from 0 to 1.</p>
+</blockquote>
+<p>Thus we can use the iso-surface (i.e. indicator function at the points in this surface has value 0.5) of the indicator function to estimate the actual surface.</p>
+<p>I won&#39;t cover the calculation details since this blog is just an overview. If interested, see <a target="_blank" rel="noopener" href="https://hhoppe.com/poissonrecon.pdf">here</a>.</p>
+
+        </article>
+        <section class="post-near">
+            <ul>
+                
+                    <li>上一篇: 看完啦 (つд⊂)</li>
+                
+                
+                    <li>下一篇: <a href="/2025/09/03/Active-and-Volumetric-Stereo/">Active and Volumetric Stereo</a></li>
+                
+            </ul>
+        </section>
+        
+            <section class="post-tags">
+            <a class="-none-link" href="/tags/3D-Vision/" rel="tag">3D Vision</a><a class="-none-link" href="/tags/computer-vision/" rel="tag">computer vision</a>
+            </section>
+        
+    
+        <section class="post-author">
+        
+            <figure class="author-avatar">
+                <img src="https://sdn.geekzu.org/avatar/d22eb460ecab37fcd7205e6a3c55c228?s=200&r=X&d=" alt="Hingle" />
+            </figure>
+        
+            <div class="author-info">
+                <h4>Hingle</h4>
+                <p>请在这里设置你的作者信息</p>
+            </div>
+        </section>
+    
+    </div>
+</main>
+
+    <footer>
+    <div class="buttons">
+        <button class="to-top" href="#"></button>
+    </div>
+    <div class="wrap min">
+        <section class="widget">
+            <div class="row">
+                <div class="col-m-4">
+                    <h3 class="title-recent">最新文章：</h3>
+                    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2025/09/03/3D-Representation/">3D Representation</a></li><li class="post-list-item"><a class="post-list-link" href="/2025/09/03/Active-and-Volumetric-Stereo/">Active and Volumetric Stereo</a></li><li class="post-list-item"><a class="post-list-link" href="/2025/09/02/rlbook-reading-ch1-intro/">rlbook reading: ch1-intro</a></li><li class="post-list-item"><a class="post-list-link" href="/2025/09/01/stereo-systems/">Stereo Systems</a></li><li class="post-list-item"><a class="post-list-link" href="/2025/08/30/epipolar-geometry/">epipolar-geometry</a></li></ul>
+                </div>
+                <div class="col-m-4">
+                    <h3 class="title-date">时光机：</h3>
+                    <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/09/">九月 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/08/">八月 2025</a></li></ul>
+                </div>
+                <div class="col-m-4">
+                    <h3 class="title-tags">标签云：</h3>
+                    <a href="/tags/3D-Vision/" style="font-size: 15px;">3D Vision</a> <a href="/tags/computer-vision/" style="font-size: 20px;">computer vision</a> <a href="/tags/math/" style="font-size: 10px;">math</a> <a href="/tags/read-book/" style="font-size: 10px;">read book</a> <a href="/tags/rl/" style="font-size: 10px;">rl</a>
+                </div>
+            </div>
+        </section>
+        <section class="sub-footer">
+            <p>© 2025 <a href="/">guochuan</a>. All Rights Reserved. Theme By <a href="https://github.com/Dreamer-Paul/Hingle" target="_blank" rel="nofollow">Hingle</a>.</p>
+        </section>
+    </div>
+</footer>
+
+
+<script src="/static/kico.js"></script>
+<script src="/static/hingle.js"></script>
+<script src="/static/todo.js"></script>
+
+
+
+<script>var hingle = new Paul_Hingle({"copyright":true,"night":true});</script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
