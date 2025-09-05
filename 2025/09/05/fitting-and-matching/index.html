@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    
+    <meta charset="UTF-8">
+    <title>fitting and matching - guochuan</title>
+    <link rel="shortcut icon" href="/static/img/icon.png">
+    <link rel="icon" href="/static/img/icon.png" sizes="192x192"/>
+    <link rel="stylesheet" href="/static/todo.css">
+    <link rel="stylesheet" href="/static/custom.css">
+    
+<link rel="stylesheet" href="/static/kico.css">
+<link rel="stylesheet" href="/static/hingle.css">
+
+    
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta property="og:site_name" content="guochuan">
+    <meta property="og:title" content="fitting and matching"/>
+    
+  
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      processEscapes: true,
+      processEnvironments: true
+    },
+    options: {
+      skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+    }
+  };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <header>
+    <div class="head-title">
+        <h4>guochuan</h4>
+    </div>
+    <div class="head-action">
+        <div class="toggle-btn"></div>
+        <div class="light-btn"></div>
+        <div class="search-btn"></div>
+    </div>
+    <form class="head-search" method="post">
+        <input type="text" name="s" placeholder="搜索什么？">
+    </form>
+    <nav class="head-menu">
+        <a href="/">首页</a>
+        <div class="has-child">
+            <a href>分类</a>
+            <div class="sub-menu">
+                <a class="category-link" href="/categories/computer-vision/">computer vision</a><a class="category-link" href="/categories/reinforcement-learning/">reinforcement learning</a>
+            </div>
+        </div>
+        
+            <a href="/about">关于我</a>
+        
+            <a href="/friends">朋友们</a>
+        
+    </nav>
+</header>
+
+    <main>
+    <div class="wrap min">
+        <section class="post-title">
+            <h2>fitting and matching</h2>
+            <div class="post-meta">
+<time class="date">2025.09.05</time>
+
+    <time class="date updated-time" style="margin-left: 10px; color: #999;">
+        (Updated: 2025.09.05)
+    </time>
+
+            
+                <span class="category"><a class="category-link" href="/categories/computer-vision/">computer vision</a></span>
+            
+            </div>
+        </section>
+        <article class="post-content">
+        
+            <blockquote>
+<p>The goal of <strong>fitting</strong> is to find a parametric model (e.g. line, curve) that best describes the observed data. We can obtain the optimal paramters of the model by minimizing a <em>fitting error</em> r betwee the data and a particular estimate of the model parameters.</p>
+</blockquote>
+<p>I will introduce three techniques:</p>
+<ul>
+<li><em>Least-squares</em></li>
+<li><em>RANSAC</em> (<strong>ra</strong>ndom <strong>sa</strong>mple <strong>c</strong>onsensus)</li>
+<li><em>Hough transform</em></li>
+</ul>
+<h1 id="Least-squares"><a href="#Least-squares" class="headerlink" title="Least-squares"></a>Least-squares</h1><h2 id="Naive-way"><a href="#Naive-way" class="headerlink" title="Naive way"></a>Naive way</h2><p>Maybe you have been quite familiar with the problem: Given a series of $N$ 2D points $\{(x_i,y_i)\}_{i=1}^N$, you need to find a line $y=mx+b$ such that the squared error in the $y$ dimension is minimized.</p>
+<p>Specifically, we want to find model parameters $w=[m\quad b]^T$ to minimize error function $E$:</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    E&=\sum_{i=1}^N(y_i-\hat{y}_i)^2\\
+    &=\sum_{i=1}^N(y_i-[x_i\quad 1]\begin{bmatrix}
+        m\\b
+    \end{bmatrix})^2\\
+    &=\parallel \begin{bmatrix}
+        y_1\\ \vdots \\y_N
+    \end{bmatrix}-\begin{bmatrix}
+        x_1 &1\\ \vdots &\vdots \\ x_N &1
+    \end{bmatrix}\begin{bmatrix}
+        m\\ b
+    \end{bmatrix}\parallel^2 \\
+    &=\parallel y-Xw\parallel^2
+\end{aligned}</script><p>We then set the gradient of the error function $E$ w.r.t $w$ equal to 0:</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    \nabla_w E&=-2X^Ty+2X^TXw\\
+& =0
+\end{aligned}</script><p>Thid leads to the normal equations:</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    X^TXw=X^Ty
+\end{aligned}</script><p>We assume that $X$ is full-rank, so $X^TX$ is invertible. Thus we get a closed-form solutoin for $w$:</p>
+<script type="math/tex; mode=display">
+w=(X^TX)^{-1}X^Ty</script><h2 id="Improvement"><a href="#Improvement" class="headerlink" title="Improvement"></a>Improvement</h2><p>However, this method fails completely for fitting points that describe a vertical line ($m$ undefined). In this case, $m$ would be set to extremely large, leading to numerically unstable solutions. So we can use an <strong>alternate line formulation</strong> of the form:</p>
+<script type="math/tex; mode=display">
+ax+by+c=0</script><p>Note that our new line parameterization accounts for error in both the $x-$ and $y-$axes, our new error is the <em>sum of squared orthogonal distances</em>. </p>
+<p>Given a 2D data point $P=(x_i,y_i)$, its distance from the line is:</p>
+<script type="math/tex; mode=display">
+d=\frac{|ax_i+by_i+c|}{\sqrt{a^2+b^2}}</script><p>To simplify, we constrain the normal vector  $||\vec{\textbf{n}}||=\sqrt{a^2+b^2}=1$</p>
+<p>Thus, the new erro function $E$ is:</p>
+<script type="math/tex; mode=display">
+E=\sum_{i=1}^N(ax_i+by_i+c)^2</script><p>where $a^2+b^2=1$.<br>Since we notice that $E(a,b,c)$ is convex w.r.t parameter $c$. We can first fix $(a,b)$ and compute the optimal $c$ by setting the gridiant of $E$ w,r,t $c$ equal 0:</p>
+<script type="math/tex; mode=display">
+\nabla_cE=2Nc+2(\sum_{i=1}^Nax_i+by_i)=0</script><p>We get $c=-a\overline{x}-b\overline{y}$</p>
+<p>As we get $c$, we can rewrite $E$:</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    E&=\sum_{i=1}^N(a(x_i-\overline{x})+b(y_i-\overline{y}))^2\\
+    &= \parallel\begin{bmatrix}
+        x_1-\overline{x} &y_1-\overline{y}\\
+        \vdots & \vdots \\
+        x_N-\overline{x} & y_N-\overline{y}
+    \end{bmatrix} \begin{bmatrix}
+        a\\b
+    \end{bmatrix}\parallel ^2 \\
+    &=\parallel Xw \parallel^2
+\end{aligned}</script><p>We can easily get the optimal $w$ by using $\textbf{SVD}$ on $X$:</p>
+<script type="math/tex; mode=display">
+X=USV^T</script><p>$\hat{w}$ is the lost column of $V$</p>
+<blockquote>
+<p>If you are not familiar with $\textbf{SVD}$, I strongly recommend reading <a target="_blank" rel="noopener" href="https://www.cs.cmu.edu/~venkatg/teaching/CStheory-infoage/book-chapter-4.pdf">this</a> to have a thorough understanding since $\textbf{SVD}$ is a common techniques in computer vision.</p>
+</blockquote>
+<h2 id="Further-improvement"><a href="#Further-improvement" class="headerlink" title="Further improvement:"></a>Further improvement:</h2><p>In practice, least-squares fits noisy data well but is susceptible to outliers. If we write the residual for $i$-th data point as $r_i=ax_i+by_i+c$ and the cost as $C(r_i)=r_i^2$. The quadratic growth of the squared error $C(r_i)$ means that outliers with large residuals $r_i$ exert an outsized influence on cost minimum.</p>
+<p>We can penalize large residuals less by a robust cost function:</p>
+<script type="math/tex; mode=display">
+C(r_i,\sigma)=\frac{r_i^2}{r_i^2+\sigma^2}</script><p>A larger $\sigma$ widens the quadratic curve in the center,  penalizing outliers more relative to other points (similar to the original squared error function). A small $\sigma$ narrows the quadratic curve, penalizing outliers less.If $\sigma$ is too small, then most of the residuals will be treated as outliers even when they are not, leading to a poor fit. If $\sigma$ is too large, then we do not benefit from the robust cost function and end up with the least-squares fit.</p>
+<p>Since the robust cost functions are non-linear, they are optimized with iterative methods. In practice, the closed-form least-squares solution is often used as a starting point, followed by iteratively fitting the parameters with<br>a robust non-linear cost function.</p>
+<h1 id="RANSAC"><a href="#RANSAC" class="headerlink" title="RANSAC"></a>RANSAC</h1><p>This method, which stands for <strong>ra</strong>ndom <strong>sa</strong>mple <strong>c</strong>onsensus, is designed to be robust to outliers and missing data. I will show how to use this to perform line fitting, but it generalizeds to many different fitting contexts.</p>
+<h2 id="Alogorithm-process"><a href="#Alogorithm-process" class="headerlink" title="Alogorithm process"></a>Alogorithm process</h2><p>Given a series of $N$ 2D points $X=\{(x_i,y_i)\}_{i=1}^N$ that we want to fit a line to, the process is:</p>
+<ul>
+<li>First, randomly select the minimum number of points needed to fit a model. A line requires at least two points, so we randomly chooes two.</li>
+<li>Fit the model to the randomly selected sample set.</li>
+<li>Use the fitted model to compute the <em>inlier set</em> from the entire dataset. Given the model parameters $w$, it&#39;s defined by:<script type="math/tex; mode=display">
+P=\{(x_i,y_i)\mid r(p=(x_i,y_i),w)<\delta\}</script>where $r$ is the residual between a data point and the model and $\delta$ is some arbitrary threshold. So the <em>outlier set</em> is defined by $O=X \backslash P$.</li>
+<li>We repeat these steps for a finite number of iterations $M$ with a new random sample each time until the size of the inlier set is maximized.</li>
+</ul>
+<h2 id="Tune-parameters"><a href="#Tune-parameters" class="headerlink" title="Tune parameters"></a>Tune parameters</h2><p>The number of times to sample $n$ and the tolerance threshold $\delta$ need to predifine before the algorithm. It&#39;s unnecessary to try every possible sample.We can estimate the number of iterations $n$ to guarantee with probability $p$ at least one random sample with an inlier set free of “real” outliers for a given $s$ (minimum number<br>of points required to fit a model) and $\epsilon $ ∈ [0, 1] (proportion of outliers):</p>
+<ul>
+<li>The chance that a single random sample of $s$ points contain all inliers is $(1-\epsilon)^s$</li>
+<li>The chance that a single random sample contains at least one outlier is $1-(1-\epsilon)^s$</li>
+<li>The chance that all $n$ samples contain at least one outlier is $(1-(1-\epsilon)^s)^n$</li>
+<li>the chance that at least one of the $n$ samples doesn&#39;t contain ant ouliers is $p=1-(1-(1-\epsilon)^s)^n$</li>
+</ul>
+<p>Thus we can derive $n$:</p>
+<script type="math/tex; mode=display">
+n=\frac{\log (1-p)}{\log(1-(1-\epsilon)^s)}</script><h1 id="Hough-Transform"><a href="#Hough-Transform" class="headerlink" title="Hough Transform"></a>Hough Transform</h1><p>The problem is the same as before. This method considers dull parameter, or $\textbf{Hough space}$. A point in the image space (on the line $y_i=mx_i+n$) becomes a line in the parameter space defined by $n=-x_im+y_i$. Similarly, a point in the parameter space ($m,n$) is a line in the image space given by $y=mx+n$. As illustrated:<br><img src="/2025/09/05/fitting-and-matching/fig1.png" class="" title="alt text"><br>We see that a line in the parameter space $n=-x_im+y_i$ represents all of the different possible lines in the image space that pass through the point $(x_i,y_i)$ in the image space. Thus, to find the line in the image space that fits both image points $(x_1,y_1)$ and $(x_2,y_2)$, we associate both points with lines in the Hough space and find the point of intersection $(m&#39;,n&#39;)$.</p>
+<p>In practice, we divide the Hough space into a discrete grid of squared cells with width $w$ for the parameter space. We maintain a grid of counts for every $w\times w$ cell centered at $(m,n)$ denoted as $A(m,n)=0$ for all $(m,n)$ initially. For every point ($x_i,y_i$) in the image plane, we find all $(m,n)$ satisfying $n=-x_im+y_i$ and increment the count by 1. After we do for all data points, the point $(m,n)$ in <strong>Hough space</strong> with highest count represent the fitted line in the image plane. </p>
+<p>However, as Least-squares case, $m$ is unbounded which make this method computational and memory intensive. </p>
+<h2 id="Polar-Parameterization-Improvement"><a href="#Polar-Parameterization-Improvement" class="headerlink" title="Polar Parameterization Improvement"></a>Polar Parameterization Improvement</h2><p>To solve this, we can consider a <em>solar parameterization</em> of a line:</p>
+<p>$$<br>x\cos (\theta) + y \sin (\theta)=\rho</p>
+<p>$$, as illustrated:<br><img src="/2025/09/05/fitting-and-matching/fig2.png" class="" title="alt text"></p>
+<p>From the fig, we see that $\rho$ is the distance from the origin to the line (bounded by the image size) and that $\theta$ is the angle between the x-axis and and normal vector of the line (bounded between 0 and $\pi$). So we can use the same voting strategy to get the best $\theta$ and $\rho$.</p>
+<p>In practice, noisy data points means that sinusoidal profiles in the Hough space that correspond to points on the same line in the image space, may not necessarily intersect at the same point in the Hough space. To slove this we can increase the width $w$ of the grid cells, which increases the tolerance to imperfect intersections. So small grid sizes may result in missed image space lines due to noise, while large grid sizes may merge different lines and reduce estimation accuracy since all $\rho,\theta$ within a cell are possible lines. </p>
+
+        </article>
+        <section class="post-near">
+            <ul>
+                
+                    <li>上一篇: 看完啦 (つд⊂)</li>
+                
+                
+                    <li>下一篇: <a href="/2025/09/03/3D-Representation/">3D Representation</a></li>
+                
+            </ul>
+        </section>
+        
+            <section class="post-tags">
+            <a class="-none-link" href="/tags/computer-vision/" rel="tag">computer vision</a>
+            </section>
+        
+    
+        <section class="post-author">
+        
+            <figure class="author-avatar">
+                <img src="https://sdn.geekzu.org/avatar/d22eb460ecab37fcd7205e6a3c55c228?s=200&r=X&d=" alt="Hingle" />
+            </figure>
+        
+            <div class="author-info">
+                <h4>Hingle</h4>
+                <p>请在这里设置你的作者信息</p>
+            </div>
+        </section>
+    
+    </div>
+</main>
+
+    <footer>
+    <div class="buttons">
+        <button class="to-top" href="#"></button>
+    </div>
+    <div class="wrap min">
+        <section class="widget">
+            <div class="row">
+                <div class="col-m-4">
+                    <h3 class="title-recent">最新文章：</h3>
+                    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2025/09/05/fitting-and-matching/">fitting and matching</a></li><li class="post-list-item"><a class="post-list-link" href="/2025/09/03/3D-Representation/">3D Representation</a></li><li class="post-list-item"><a class="post-list-link" href="/2025/09/03/Active-and-Volumetric-Stereo/">Active and Volumetric Stereo</a></li><li class="post-list-item"><a class="post-list-link" href="/2025/09/02/rlbook-reading-ch1-intro/">rlbook reading: ch1-intro</a></li><li class="post-list-item"><a class="post-list-link" href="/2025/09/01/stereo-systems/">Stereo Systems</a></li><li class="post-list-item"><a class="post-list-link" href="/2025/08/30/epipolar-geometry/">epipolar-geometry</a></li></ul>
+                </div>
+                <div class="col-m-4">
+                    <h3 class="title-date">时光机：</h3>
+                    <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/09/">九月 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/08/">八月 2025</a></li></ul>
+                </div>
+                <div class="col-m-4">
+                    <h3 class="title-tags">标签云：</h3>
+                    <a href="/tags/3D-Vision/" style="font-size: 15px;">3D Vision</a> <a href="/tags/computer-vision/" style="font-size: 20px;">computer vision</a> <a href="/tags/math/" style="font-size: 10px;">math</a> <a href="/tags/read-book/" style="font-size: 10px;">read book</a> <a href="/tags/rl/" style="font-size: 10px;">rl</a>
+                </div>
+            </div>
+        </section>
+        <section class="sub-footer">
+            <p>© 2025 <a href="/">guochuan</a>. All Rights Reserved. Theme By <a href="https://github.com/Dreamer-Paul/Hingle" target="_blank" rel="nofollow">Hingle</a>.</p>
+        </section>
+    </div>
+</footer>
+
+
+<script src="/static/kico.js"></script>
+<script src="/static/hingle.js"></script>
+<script src="/static/todo.js"></script>
+
+
+
+<script>var hingle = new Paul_Hingle({"copyright":true,"night":true});</script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
